@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<footer th:fragment="footer" class="site-footer">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <a class="footer-brand" th:href="@{/}">
+                    <span class="brand-mark" aria-hidden="true">LH</span>
+                    <span>LandHub</span>
+                </a>
+                <p>
+                    A modern land sales and property management platform for verified listings,
+                    site visits, bookings, payments, and customer relationships.
+                </p>
+                <div class="social-links" aria-label="Social media links">
+                    <a href="#" aria-label="LandHub on Facebook"><i class="bi bi-facebook" aria-hidden="true"></i></a>
+                    <a href="#" aria-label="LandHub on Instagram"><i class="bi bi-instagram" aria-hidden="true"></i></a>
+                    <a href="#" aria-label="LandHub on LinkedIn"><i class="bi bi-linkedin" aria-hidden="true"></i></a>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-2">
+                <h2>Quick Links</h2>
+                <ul>
+                    <li><a th:href="@{/}">Home</a></li>
+                    <li><a th:href="@{/lands}">Lands</a></li>
+                    <li><a th:href="@{/about}">About</a></li>
+                    <li><a th:href="@{/contact}">Contact</a></li>
+                </ul>
+            </div>
+
+            <div class="col-6 col-lg-2">
+                <h2>Services</h2>
+                <ul>
+                    <li><a th:href="@{/lands}">Verified Properties</a></li>
+                    <li><a th:href="@{/lands}">Site Visits</a></li>
+                    <li><a th:href="@{/lands}">Bookings</a></li>
+                    <li><a th:href="@{/lands}">Secure Payments</a></li>
+                </ul>
+            </div>
+
+            <div class="col-6 col-lg-2">
+                <h2>Account</h2>
+                <ul>
+                    <li><a th:href="@{/login}">Login</a></li>
+                    <li><a th:href="@{/register}">Register</a></li>
+                    <li><a th:href="@{/login}">My Account</a></li>
+                </ul>
+            </div>
+
+            <div class="col-6 col-lg-2">
+                <h2>Contact</h2>
+                <ul class="contact-list">
+                    <li><i class="bi bi-geo-alt" aria-hidden="true"></i> Colombo, Sri Lanka</li>
+                    <li><i class="bi bi-telephone" aria-hidden="true"></i> +94 11 234 5678</li>
+                    <li><i class="bi bi-envelope" aria-hidden="true"></i> hello@landhub.lk</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <span>&copy; 2026 LandHub. All rights reserved.</span>
+            <span>Built for trusted property journeys.</span>
+        </div>
+    </div>
+</footer>
+</body>
+</html>

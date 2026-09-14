@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="navbar" class="navbar navbar-expand-lg fixed-top landhub-navbar" aria-label="Primary navigation">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/}" aria-label="LandHub home">
+            <span class="brand-mark" aria-hidden="true">LH</span>
+            <span>LandHub</span>
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
+                aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link active" aria-current="page" th:href="@{/}">Home</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/lands}">Lands</a></li>
+                <li class="nav-item"><a class="nav-link" href="#featured-properties">Featured Properties</a></li>
+                <li class="nav-item"><a class="nav-link" href="#how-it-works">How It Works</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/about}">About</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/contact}">Contact</a></li>
+            </ul>
+
+            <div class="navbar-actions">
+                <a class="nav-auth-link" th:href="@{/login}">Login</a>
+                <a class="nav-auth-link" th:href="@{/register}">Create Account</a>
+                <a class="btn btn-nav" th:href="@{/lands}">
+                    <i class="bi bi-map" aria-hidden="true"></i>
+                    Explore Lands
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+</body>
+</html>
