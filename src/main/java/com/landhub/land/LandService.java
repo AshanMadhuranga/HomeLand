@@ -145,6 +145,18 @@ public class LandService {
         landRepository.save(land);
     }
 
+    public void markReserved(Long id) {
+        Land land = landRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Land listing was not found."));
+
+        if (land.getStatus() != LandStatus.AVAILABLE) {
+            throw new IllegalArgumentException("Only available land can be reserved.");
+        }
+
+        land.setStatus(LandStatus.RESERVED);
+        landRepository.save(land);
+    }
+
     public void keepNonPublic(Long id) {
         Land land = landRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Land listing was not found."));
