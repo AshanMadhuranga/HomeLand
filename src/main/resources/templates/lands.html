@@ -146,10 +146,11 @@
 
             <div class="row g-4" th:if="${!#lists.isEmpty(lands)}">
                 <div class="col-md-6 col-xl-4 reveal" th:each="land : ${lands}">
-                    <article class="property-card listing-card" th:classappend="${land.status.name() == 'SOLD'} ? ' sold-card'">
+                    <article class="property-card listing-card" th:classappend="${land.status.name() == 'SOLD'} ? ' sold-card'" th:with="promotion=${promotionsByLand[land.id]}">
                         <div class="property-image">
                             <img th:src="${land.coverImageUrl}" th:alt="${land.title + ' in ' + land.location}">
                             <span class="badge badge-verified" th:if="${verifiedLandIds.contains(land.id)}"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
+                            <span class="badge badge-promotion" th:if="${promotion != null}"><i class="bi bi-megaphone" aria-hidden="true"></i> <span th:text="${promotion.featured ? 'Featured' : 'Offer'}">Offer</span></span>
                         </div>
                         <div class="property-body">
                             <div class="property-meta">
@@ -160,8 +161,9 @@
                             <dl class="property-details">
                                 <div><dt>Size</dt><dd><span th:text="${land.size}">12.5</span> <span th:text="${land.sizeUnit}">Perches</span></dd></div>
                                 <div><dt>Type</dt><dd th:text="${land.landType}">RESIDENTIAL</dd></div>
-                                <div><dt>Price</dt><dd>LKR <span th:text="${land.price}">7.8M</span></dd></div>
+                                <div><dt>Price</dt><dd><span th:if="${promotion != null}" class="text-muted text-decoration-line-through">LKR <span th:text="${land.price}">7.8M</span></span> <strong th:if="${promotion != null}">LKR <span th:text="${promotion.promotionalPrice}">7.2M</span></strong><span th:if="${promotion == null}">LKR <span th:text="${land.price}">7.8M</span></span></dd></div>
                             </dl>
+                            <p class="small text-success fw-bold" th:if="${promotion != null}" th:text="${promotion.promotionalText != null ? promotion.promotionalText : promotion.title}">Special offer</p>
                             <a class="btn btn-card" th:href="@{/lands/{id}(id=${land.id})}">View Details</a>
                         </div>
                     </article>

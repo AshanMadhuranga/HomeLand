@@ -1,5 +1,6 @@
 package com.landhub.land;
 
+import com.landhub.marketing.PromotionService;
 import com.landhub.verification.VerificationService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,10 +17,12 @@ public class LandController {
 
     private final LandService landService;
     private final VerificationService verificationService;
+    private final PromotionService promotionService;
 
-    public LandController(LandService landService, VerificationService verificationService) {
+    public LandController(LandService landService, VerificationService verificationService, PromotionService promotionService) {
         this.landService = landService;
         this.verificationService = verificationService;
+        this.promotionService = promotionService;
     }
 
     @GetMapping("/lands")
@@ -45,6 +48,7 @@ public class LandController {
         }
 
         model.addAttribute("lands", lands);
+        model.addAttribute("promotionsByLand", promotionService.publicPromotionsByLand(lands));
         model.addAttribute("verifiedLandIds", verifiedLandIds);
         model.addAttribute("resultCount", lands.size());
         model.addAttribute("landTypes", LandType.values());
@@ -71,9 +75,11 @@ public class LandController {
                             .limit(3)
                             .toList();
                     model.addAttribute("land", land);
+                    model.addAttribute("promotion", promotionService.findPublicActiveForLand(land.getId()).orElse(null));
                     model.addAttribute("verified", verificationService.hasApprovedVerification(land.getId()));
                     model.addAttribute("relatedLands", relatedLands);
                     model.addAttribute("verifiedLandIds", verificationService.findApprovedLandIds(relatedLands));
+                    model.addAttribute("promotionsByLand", promotionService.publicPromotionsByLand(relatedLands));
                     return "land-details";
                 })
                 .orElseGet(() -> {
@@ -84,6 +90,7 @@ public class LandController {
                     model.addAttribute("landNotFound", true);
                     model.addAttribute("relatedLands", relatedLands);
                     model.addAttribute("verifiedLandIds", verificationService.findApprovedLandIds(relatedLands));
+                    model.addAttribute("promotionsByLand", promotionService.publicPromotionsByLand(relatedLands));
                     return "land-details";
                 });
     }

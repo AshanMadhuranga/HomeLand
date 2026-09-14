@@ -5,6 +5,7 @@ import com.landhub.land.LandStatus;
 import com.landhub.booking.BookingService;
 import com.landhub.inquiry.InquiryService;
 import com.landhub.payment.PaymentService;
+import com.landhub.marketing.PromotionService;
 import com.landhub.sitevisit.SiteVisitService;
 import com.landhub.verification.VerificationService;
 import com.landhub.verification.VerificationStatus;
@@ -22,19 +23,22 @@ public class DashboardController {
     private final SiteVisitService siteVisitService;
     private final BookingService bookingService;
     private final PaymentService paymentService;
+    private final PromotionService promotionService;
 
     public DashboardController(LandService landService,
                                VerificationService verificationService,
                                InquiryService inquiryService,
                                SiteVisitService siteVisitService,
                                BookingService bookingService,
-                               PaymentService paymentService) {
+                               PaymentService paymentService,
+                               PromotionService promotionService) {
         this.landService = landService;
         this.verificationService = verificationService;
         this.inquiryService = inquiryService;
         this.siteVisitService = siteVisitService;
         this.bookingService = bookingService;
         this.paymentService = paymentService;
+        this.promotionService = promotionService;
     }
 
     @GetMapping("/customer/dashboard")
@@ -58,6 +62,8 @@ public class DashboardController {
         model.addAttribute("pendingBookingCount", bookingService.countPending());
         model.addAttribute("pendingPaymentCount", paymentService.countPending());
         model.addAttribute("paidRevenue", paymentService.paidRevenue());
+        model.addAttribute("activePromotionCount", promotionService.countActive());
+        model.addAttribute("scheduledPromotionCount", promotionService.countScheduled());
         return "admin/dashboard";
     }
 
