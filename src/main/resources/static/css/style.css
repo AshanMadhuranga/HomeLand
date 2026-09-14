@@ -542,6 +542,22 @@ a {
     background: #e5e7eb;
 }
 
+.status.open {
+    color: #164e63;
+    background: #cffafe;
+}
+
+.status.responded,
+.status.completed {
+    color: var(--color-emerald-dark);
+    background: var(--color-mint);
+}
+
+.status.resolved {
+    color: #3f3f46;
+    background: #e4e4e7;
+}
+
 .sold-card {
     opacity: 0.82;
 }
@@ -1609,6 +1625,7 @@ a {
 
 .verification-upload-fields select,
 .verification-upload-fields input,
+.review-form input,
 .review-form textarea {
     width: 100%;
     min-height: 2.75rem;
