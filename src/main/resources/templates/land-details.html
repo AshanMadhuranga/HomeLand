@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="View premium land details, verification status, inquiry actions, and related properties on LandHub.">
+    <title th:text="${land != null ? 'LandHub | ' + land.title : 'LandHub | Property Not Found'}">LandHub | Property Details</title>
+
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://images.unsplash.com">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main id="main-content">
+    <section class="detail-hero" aria-labelledby="property-title">
+        <div class="container">
+            <nav class="breadcrumb-wrap reveal" aria-label="Breadcrumb">
+                <a th:href="@{/}">Home</a>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                <a th:href="@{/lands}">Lands</a>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                <span th:text="${land != null ? land.title : 'Property Not Found'}">Property Details</span>
+            </nav>
+        </div>
+    </section>
+
+    <section class="detail-section section-padding" th:if="${landNotFound}">
+        <div class="container">
+            <div class="empty-state reveal">
+                <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                <h1 id="property-title">Property Not Found</h1>
+                <p>The land listing may be inactive, unavailable, or removed from public browsing.</p>
+                <a class="btn btn-primary" th:href="@{/lands}">Browse Public Lands</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="detail-section section-padding" th:if="${land != null}">
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-8">
+                    <div class="property-gallery reveal" aria-label="Property image gallery">
+                        <img class="gallery-main" th:src="${land.coverImageUrl}" th:alt="${land.title + ' in ' + land.location}">
+                        <div class="gallery-thumbs" th:if="${!#lists.isEmpty(land.images)}">
+                            <img th:each="image : ${land.images}" th:src="${image.imageUrl}" th:alt="${land.title + ' image'}">
+                        </div>
+                    </div>
+
+                    <article class="detail-card reveal">
+                        <div class="detail-title-row">
+                            <div>
+                                <p class="section-kicker">Featured property</p>
+                                <h1 id="property-title" th:text="${land.title}">Prime Residential Plot</h1>
+                                <p class="detail-location">
+                                    <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                                    <span th:text="${land.location + ', ' + land.district}">Malabe, Colombo District</span>
+                                </p>
+                            </div>
+                            <div class="detail-badges">
+                                <span class="status" th:classappend="${land.status.name().toLowerCase()}" th:text="${land.status}">AVAILABLE</span>
+                                <span class="detail-verified" th:if="${verified}"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
+                                <span class="detail-verified" th:if="${promotion != null}"><i class="bi bi-megaphone" aria-hidden="true"></i> Promotion</span>
+                            </div>
+                        </div>
+
+                        <div class="detail-facts" aria-label="Property summary">
+                            <div>
+                                <span>Price</span>
+                                <strong><span th:if="${promotion != null}" class="text-muted text-decoration-line-through">LKR <span th:text="${land.price}">7.8M</span></span> <span th:if="${promotion != null}">LKR <span th:text="${promotion.promotionalPrice}">7.2M</span></span><span th:if="${promotion == null}">LKR <span th:text="${land.price}">7.8M</span></span></strong>
+                            </div>
+                            <div>
+                                <span>Land Size</span>
+                                <strong><span th:text="${land.size}">12.5</span> <span th:text="${land.sizeUnit}">Perches</span></strong>
+                            </div>
+                            <div>
+                                <span>Land Type</span>
+                                <strong th:text="${land.landType}">RESIDENTIAL</strong>
+                            </div>
+                        </div>
+
+                        <div class="verification-note" th:if="${promotion != null}">
+                            <h3 th:text="${promotion.title}">Special offer</h3>
+                            <p th:text="${promotion.promotionalText != null ? promotion.promotionalText : promotion.description}">Promotional offer details.</p>
+                            <p class="small mb-0"><strong>Offer valid until:</strong> <span th:text="${promotion.endDate}">2026-12-31</span></p>
+                        </div>
+
+                        <h2>Description</h2>
+                        <p th:text="${land.description}">
+                            A well-positioned residential land opportunity with convenient road access and strong neighborhood growth.
+                        </p>
+                    </article>
+
+                    <section class="detail-card reveal" aria-labelledby="property-details-heading">
+                        <h2 id="property-details-heading">Property Details</h2>
+                        <dl class="details-grid">
+                            <div><dt>Property ID</dt><dd>LH-<span th:text="${land.id}">1</span></dd></div>
+                            <div><dt>Land Type</dt><dd th:text="${land.landType}">RESIDENTIAL</dd></div>
+                            <div><dt>Size</dt><dd><span th:text="${land.size}">12.5</span> <span th:text="${land.sizeUnit}">Perches</span></dd></div>
+                            <div><dt>Road Access</dt><dd th:text="${land.roadAccess ? 'Available' : 'Not specified'}">Available</dd></div>
+                            <div><dt>Water</dt><dd th:text="${land.waterAvailable ? 'Available' : 'Not specified'}">Available nearby</dd></div>
+                            <div><dt>Electricity</dt><dd th:text="${land.electricityAvailable ? 'Available' : 'Not specified'}">Available nearby</dd></div>
+                            <div><dt>Document Status</dt><dd th:text="${verified ? 'Reviewed in LandHub' : 'Pending platform review'}">Reviewed in LandHub</dd></div>
+                            <div><dt>Availability</dt><dd th:text="${land.status}">AVAILABLE</dd></div>
+                        </dl>
+                    </section>
+
+                    <section class="detail-card verification-detail reveal" aria-labelledby="verification-heading" th:if="${verified}">
+                        <div class="verification-icon">
+                            <i class="bi bi-shield-check" aria-hidden="true"></i>
+                        </div>
+                        <div>
+                            <p class="section-kicker">Verification status</p>
+                            <h2 id="verification-heading">Verified Property</h2>
+                            <p>
+                                The property details and submitted documents were reviewed within the LandHub platform
+                                before this listing was prepared for public viewing.
+                            </p>
+                        </div>
+                    </section>
+
+                    <section class="detail-card reveal" aria-labelledby="location-heading">
+                        <h2 id="location-heading">Location</h2>
+                        <p class="detail-location">
+                            <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                            <span th:text="${land.address != null && !land.address.isBlank() ? land.address + ', ' + land.location + ', ' + land.district : land.location + ', ' + land.district}">
+                                Malabe, Colombo District
+                            </span>
+                        </p>
+                        <div class="map-placeholder" role="img" th:attr="aria-label=${'Map placeholder for ' + land.location + ' property location'}">
+                            <i class="bi bi-map" aria-hidden="true"></i>
+                            <span>Map preview will be connected later</span>
+                        </div>
+                    </section>
+                </div>
+
+                <aside class="col-lg-4">
+                    <div class="action-panel reveal" aria-labelledby="action-panel-heading">
+                        <p class="section-kicker">Next step</p>
+                        <h2 id="action-panel-heading" th:text="${land.bookable ? 'Interested in this land?' : 'Current availability'}">Interested in this land?</h2>
+                        <p th:if="${land.bookable}">Send an inquiry, request a guided site visit, or begin a booking request.</p>
+                        <p th:if="${!land.bookable}">
+                            This listing is currently marked as <strong th:text="${land.status}">SOLD</strong>.
+                            It can be viewed for transparency, but it is not bookable right now.
+                        </p>
+                        <a class="btn btn-primary" sec:authorize="isAuthenticated() and hasRole('CUSTOMER')" th:href="@{/customer/inquiries/new/{id}(id=${land.id})}" th:classappend="${land.status.name() == 'SOLD'} ? ' disabled'" th:attr="aria-disabled=${land.status.name() == 'SOLD'}">
+                            <i class="bi bi-chat-dots" aria-hidden="true"></i>
+                            Send Inquiry
+                        </a>
+                        <a class="btn btn-primary" sec:authorize="!isAuthenticated()" th:href="@{/login}">
+                            <i class="bi bi-chat-dots" aria-hidden="true"></i>
+                            Send Inquiry
+                        </a>
+                        <a class="btn btn-outline-dark" sec:authorize="isAuthenticated() and hasRole('CUSTOMER')" th:href="@{/customer/site-visits/new/{id}(id=${land.id})}" th:classappend="${!land.bookable} ? ' disabled'" th:attr="aria-disabled=${!land.bookable}">
+                            <i class="bi bi-calendar2-check" aria-hidden="true"></i>
+                            Request Site Visit
+                        </a>
+                        <a class="btn btn-outline-dark" sec:authorize="!isAuthenticated()" th:href="@{/login}" th:classappend="${!land.bookable} ? ' disabled'" th:attr="aria-disabled=${!land.bookable}">
+                            <i class="bi bi-calendar2-check" aria-hidden="true"></i>
+                            Request Site Visit
+                        </a>
+                        <a class="btn btn-accent" sec:authorize="isAuthenticated() and hasRole('CUSTOMER')" th:href="@{/customer/bookings/new/{id}(id=${land.id})}" th:classappend="${!land.bookable} ? ' disabled'" th:attr="aria-disabled=${!land.bookable}">
+                            <i class="bi bi-bookmark-check" aria-hidden="true"></i>
+                            Book This Land
+                        </a>
+                        <a class="btn btn-accent" sec:authorize="!isAuthenticated()" th:href="@{/login}" th:classappend="${!land.bookable} ? ' disabled'" th:attr="aria-disabled=${!land.bookable}">
+                            <i class="bi bi-bookmark-check" aria-hidden="true"></i>
+                            Book This Land
+                        </a>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </section>
+
+    <section class="related-section section-padding" th:if="${relatedLands != null && !#lists.isEmpty(relatedLands)}">
+        <div class="container">
+            <div class="section-heading reveal">
+                <p class="section-kicker">Related properties</p>
+                <h2>Similar lands you may like</h2>
+                <p>Selected public listings with similar location quality and verified status.</p>
+            </div>
+
+            <div class="row g-4">
+                        <div class="col-md-4 reveal" th:each="relatedLand : ${relatedLands}">
+                    <article class="property-card" th:with="relatedPromotion=${promotionsByLand[relatedLand.id]}">
+                        <div class="property-image">
+                            <img th:src="${relatedLand.coverImageUrl}" th:alt="${relatedLand.title}">
+                            <span class="badge badge-verified" th:if="${verifiedLandIds.contains(relatedLand.id)}"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
+                            <span class="badge badge-promotion" th:if="${relatedPromotion != null}"><i class="bi bi-megaphone" aria-hidden="true"></i> Offer</span>
+                        </div>
+                        <div class="property-body">
+                            <div class="property-meta">
+                                <span><i class="bi bi-geo-alt" aria-hidden="true"></i> <span th:text="${relatedLand.location}">Kaduwela</span></span>
+                                <span class="status" th:classappend="${relatedLand.status.name().toLowerCase()}" th:text="${relatedLand.status}">AVAILABLE</span>
+                            </div>
+                            <h3 th:text="${relatedLand.title}">Urban Edge Land Lot</h3>
+                            <dl class="property-details">
+                                <div><dt>Size</dt><dd><span th:text="${relatedLand.size}">15</span> <span th:text="${relatedLand.sizeUnit}">Perches</span></dd></div>
+                                <div><dt>Type</dt><dd th:text="${relatedLand.landType}">COMMERCIAL</dd></div>
+                                <div><dt>Price</dt><dd>LKR <span th:text="${relatedLand.price}">11.2M</span></dd></div>
+                            </dl>
+                            <a class="btn btn-card" th:href="@{/lands/{id}(id=${relatedLand.id})}">View Details</a>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

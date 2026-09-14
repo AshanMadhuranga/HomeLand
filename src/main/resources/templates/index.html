@@ -297,7 +297,7 @@
 
     <section id="promotions" class="promo-section section-padding">
         <div class="container">
-            <div class="promo-panel reveal">
+            <div class="promo-panel reveal" th:if="${#lists.isEmpty(promotions)}">
                 <div>
                     <p class="section-kicker">Exclusive opportunities</p>
                     <h2>Limited launch offer on selected Homagama lands.</h2>
@@ -314,6 +314,14 @@
                         Explore Offer
                         <i class="bi bi-arrow-right" aria-hidden="true"></i>
                     </a>
+                </div>
+            </div>
+            <div class="row g-4" th:if="${!#lists.isEmpty(promotions)}">
+                <div class="col-md-6 col-xl-4 reveal" th:each="promotion : ${promotions}">
+                    <article class="property-card">
+                        <div class="property-image"><img th:src="${promotion.bannerImageUrl != null ? promotion.bannerImageUrl : promotion.land.coverImageUrl}" th:alt="${promotion.land.title}"><span class="badge badge-promotion"><i class="bi bi-megaphone"></i> <span th:text="${promotion.featured ? 'Featured' : 'Offer'}">Offer</span></span></div>
+                        <div class="property-body"><div class="property-meta"><span th:text="${promotion.land.location}">Location</span><span class="status available">ACTIVE</span></div><h3 th:text="${promotion.title}">Promotion</h3><p th:text="${promotion.promotionalText != null ? promotion.promotionalText : promotion.description}">Offer details</p><p><span class="text-muted text-decoration-line-through">LKR <span th:text="${promotion.land.price}">0</span></span> <strong>LKR <span th:text="${promotion.promotionalPrice}">0</span></strong></p><a class="btn btn-card" th:href="@{/promotions/{id}(id=${promotion.id})}">View Offer</a></div>
+                    </article>
                 </div>
             </div>
         </div>
