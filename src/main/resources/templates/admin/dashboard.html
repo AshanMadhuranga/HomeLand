@@ -22,7 +22,7 @@
         <nav aria-label="Admin dashboard navigation">
             <a class="active" th:href="@{/admin/dashboard}"><i class="bi bi-grid" aria-hidden="true"></i> Dashboard</a>
             <a th:href="@{/admin/lands}"><i class="bi bi-map" aria-hidden="true"></i> Land Management</a>
-            <a href="#"><i class="bi bi-shield-check" aria-hidden="true"></i> Property Verification</a>
+            <a th:href="@{/verification}"><i class="bi bi-shield-check" aria-hidden="true"></i> Property Verification</a>
             <a href="#"><i class="bi bi-bookmark-check" aria-hidden="true"></i> Booking Management</a>
             <a href="#"><i class="bi bi-chat-dots" aria-hidden="true"></i> Inquiry Management</a>
             <a href="#"><i class="bi bi-credit-card" aria-hidden="true"></i> Payment Management</a>
@@ -49,9 +49,9 @@
         </header>
 
         <div class="dashboard-grid admin-dashboard-grid reveal">
-            <article class="dashboard-stat"><i class="bi bi-map" aria-hidden="true"></i><span>Total Lands</span><strong>--</strong></article>
-            <article class="dashboard-stat"><i class="bi bi-check2-circle" aria-hidden="true"></i><span>Available Lands</span><strong>--</strong></article>
-            <article class="dashboard-stat"><i class="bi bi-shield-check" aria-hidden="true"></i><span>Pending Verification</span><strong>--</strong></article>
+            <article class="dashboard-stat"><i class="bi bi-map" aria-hidden="true"></i><span>Total Lands</span><strong th:text="${totalLands}">--</strong></article>
+            <article class="dashboard-stat"><i class="bi bi-check2-circle" aria-hidden="true"></i><span>Available Lands</span><strong th:text="${availableLands}">--</strong></article>
+            <article class="dashboard-stat"><i class="bi bi-shield-check" aria-hidden="true"></i><span>Pending Verification</span><strong th:text="${pendingVerificationCount}">--</strong></article>
             <article class="dashboard-stat"><i class="bi bi-bookmark-check" aria-hidden="true"></i><span>Pending Bookings</span><strong>--</strong></article>
             <article class="dashboard-stat"><i class="bi bi-people" aria-hidden="true"></i><span>Customers</span><strong>--</strong></article>
             <article class="dashboard-stat"><i class="bi bi-cash-stack" aria-hidden="true"></i><span>Revenue</span><strong>--</strong></article>
@@ -59,8 +59,8 @@
 
         <section class="dashboard-panel reveal">
             <h2>Module Roadmap</h2>
-            <p>Land Management is active. Verification, bookings, inquiries, payments, marketing, and review workflows remain placeholders for future modules.</p>
-            <a class="btn btn-outline-dark" th:href="@{/admin/lands/new}">Add Land Listing</a>
+            <p>Land Management and Property Verification are active. Bookings, inquiries, payments, marketing, and review workflows remain placeholders for future modules.</p>
+            <a class="btn btn-outline-dark" th:href="@{/verification}">Open Verification Queue</a>
         </section>
     </section>
 </main>

@@ -64,7 +64,7 @@
                             </div>
                             <div class="detail-badges">
                                 <span class="status" th:classappend="${land.status.name().toLowerCase()}" th:text="${land.status}">AVAILABLE</span>
-                                <span class="detail-verified"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
+                                <span class="detail-verified" th:if="${verified}"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
                             </div>
                         </div>
 
@@ -98,12 +98,12 @@
                             <div><dt>Road Access</dt><dd th:text="${land.roadAccess ? 'Available' : 'Not specified'}">Available</dd></div>
                             <div><dt>Water</dt><dd th:text="${land.waterAvailable ? 'Available' : 'Not specified'}">Available nearby</dd></div>
                             <div><dt>Electricity</dt><dd th:text="${land.electricityAvailable ? 'Available' : 'Not specified'}">Available nearby</dd></div>
-                            <div><dt>Document Status</dt><dd>Reviewed in LandHub</dd></div>
+                            <div><dt>Document Status</dt><dd th:text="${verified ? 'Reviewed in LandHub' : 'Pending platform review'}">Reviewed in LandHub</dd></div>
                             <div><dt>Availability</dt><dd th:text="${land.status}">AVAILABLE</dd></div>
                         </dl>
                     </section>
 
-                    <section class="detail-card verification-detail reveal" aria-labelledby="verification-heading">
+                    <section class="detail-card verification-detail reveal" aria-labelledby="verification-heading" th:if="${verified}">
                         <div class="verification-icon">
                             <i class="bi bi-shield-check" aria-hidden="true"></i>
                         </div>
@@ -172,7 +172,7 @@
                     <article class="property-card">
                         <div class="property-image">
                             <img th:src="${relatedLand.coverImageUrl}" th:alt="${relatedLand.title}">
-                            <span class="badge badge-verified"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
+                            <span class="badge badge-verified" th:if="${verifiedLandIds.contains(relatedLand.id)}"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
                         </div>
                         <div class="property-body">
                             <div class="property-meta">

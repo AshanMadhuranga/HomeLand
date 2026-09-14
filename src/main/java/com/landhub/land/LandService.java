@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -25,6 +26,7 @@ public class LandService {
     private static final long MAX_IMAGE_SIZE = 5L * 1024L * 1024L;
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp");
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
+    private static final Set<LandStatus> PUBLIC_STATUSES = Set.of(LandStatus.AVAILABLE, LandStatus.RESERVED, LandStatus.SOLD);
 
     private final LandRepository landRepository;
     private final Path uploadDirectory = Paths.get("uploads", "lands").toAbsolutePath().normalize();
@@ -42,7 +44,7 @@ public class LandService {
                                       BigDecimal minSize,
                                       BigDecimal maxSize,
                                       String sortBy) {
-        Stream<Land> lands = landRepository.findByStatusNotOrderByCreatedAtDesc(LandStatus.INACTIVE).stream();
+        Stream<Land> lands = landRepository.findByStatusInOrderByCreatedAtDesc(PUBLIC_STATUSES).stream();
 
         if (hasText(location)) {
             String locationSearch = location.trim().toLowerCase(Locale.ROOT);
@@ -57,7 +59,7 @@ public class LandService {
         }
 
         LandStatus landStatus = parseLandStatus(availability);
-        if (landStatus != null && landStatus != LandStatus.INACTIVE) {
+        if (landStatus != null && PUBLIC_STATUSES.contains(landStatus)) {
             lands = lands.filter(land -> land.getStatus() == landStatus);
         }
 
@@ -83,7 +85,7 @@ public class LandService {
     @Transactional(readOnly = true)
     public Optional<Land> findPublicLandById(Long id) {
         return landRepository.findById(id)
-                .filter(land -> land.getStatus() != LandStatus.INACTIVE);
+                .filter(land -> PUBLIC_STATUSES.contains(land.getStatus()));
     }
 
     @Transactional(readOnly = true)
@@ -134,6 +136,37 @@ public class LandService {
                 .orElseThrow(() -> new IllegalArgumentException("Land listing was not found."));
         land.setStatus(LandStatus.INACTIVE);
         landRepository.save(land);
+    }
+
+    public void markAvailable(Long id) {
+        Land land = landRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Land listing was not found."));
+        land.setStatus(LandStatus.AVAILABLE);
+        landRepository.save(land);
+    }
+
+    public void keepNonPublic(Long id) {
+        Land land = landRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Land listing was not found."));
+
+        if (PUBLIC_STATUSES.contains(land.getStatus())) {
+            land.setStatus(LandStatus.PENDING);
+            landRepository.save(land);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public long countAll() {
+        return landRepository.count();
+    }
+
+    @Transactional(readOnly = true)
+    public long countByPublicStatus(LandStatus status) {
+        return landRepository.findByStatusInOrderByCreatedAtDesc(List.of(status)).size();
+    }
+
+    public static Collection<LandStatus> publicStatuses() {
+        return PUBLIC_STATUSES;
     }
 
     private void storeImages(Land land, MultipartFile[] files) {
