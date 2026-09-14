@@ -40,6 +40,15 @@ public class BookingService {
         return bookingRepository.findByIdAndCustomerEmailIgnoreCase(id, email);
     }
 
+    public Optional<Booking> findCustomerBookingForPayment(Long id, String email) {
+        return bookingRepository.findByIdAndCustomerEmailIgnoreCase(id, email);
+    }
+
+    public Booking findForPaymentUpdate(Long id) {
+        return bookingRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new IllegalArgumentException("Booking request was not found."));
+    }
+
     @Transactional(readOnly = true)
     public List<Booking> findAll() {
         return bookingRepository.findAllByOrderByCreatedAtDesc();
@@ -138,6 +147,23 @@ public class BookingService {
             landService.markAvailable(saved.getLand().getId());
         }
 
+        return saved;
+    }
+
+    public Booking completeAfterFullPayment(Long id) {
+        Booking booking = getBooking(id);
+
+        if (booking.getStatus() == BookingStatus.COMPLETED) {
+            return booking;
+        }
+
+        if (booking.getStatus() != BookingStatus.APPROVED) {
+            throw new IllegalArgumentException("Only approved bookings can be completed by payment.");
+        }
+
+        booking.setStatus(BookingStatus.COMPLETED);
+        Booking saved = bookingRepository.save(booking);
+        landService.markSold(saved.getLand().getId());
         return saved;
     }
 

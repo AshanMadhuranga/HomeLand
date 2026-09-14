@@ -4,6 +4,7 @@ import com.landhub.land.LandService;
 import com.landhub.land.LandStatus;
 import com.landhub.booking.BookingService;
 import com.landhub.inquiry.InquiryService;
+import com.landhub.payment.PaymentService;
 import com.landhub.sitevisit.SiteVisitService;
 import com.landhub.verification.VerificationService;
 import com.landhub.verification.VerificationStatus;
@@ -20,17 +21,20 @@ public class DashboardController {
     private final InquiryService inquiryService;
     private final SiteVisitService siteVisitService;
     private final BookingService bookingService;
+    private final PaymentService paymentService;
 
     public DashboardController(LandService landService,
                                VerificationService verificationService,
                                InquiryService inquiryService,
                                SiteVisitService siteVisitService,
-                               BookingService bookingService) {
+                               BookingService bookingService,
+                               PaymentService paymentService) {
         this.landService = landService;
         this.verificationService = verificationService;
         this.inquiryService = inquiryService;
         this.siteVisitService = siteVisitService;
         this.bookingService = bookingService;
+        this.paymentService = paymentService;
     }
 
     @GetMapping("/customer/dashboard")
@@ -39,6 +43,8 @@ public class DashboardController {
         model.addAttribute("customerInquiryCount", inquiryService.findCustomerInquiries(email).size());
         model.addAttribute("customerSiteVisitCount", siteVisitService.findCustomerSiteVisits(email).size());
         model.addAttribute("customerBookingCount", bookingService.findCustomerBookings(email).size());
+        model.addAttribute("customerPaymentCount", paymentService.countCustomerPayments(email));
+        model.addAttribute("customerTotalPaid", paymentService.customerTotalPaid(email));
         return "customer/dashboard";
     }
 
@@ -50,6 +56,8 @@ public class DashboardController {
         model.addAttribute("openInquiryCount", inquiryService.countOpen());
         model.addAttribute("pendingSiteVisitCount", siteVisitService.countPending());
         model.addAttribute("pendingBookingCount", bookingService.countPending());
+        model.addAttribute("pendingPaymentCount", paymentService.countPending());
+        model.addAttribute("paidRevenue", paymentService.paidRevenue());
         return "admin/dashboard";
     }
 

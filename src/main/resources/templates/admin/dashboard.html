@@ -26,7 +26,7 @@
             <a th:href="@{/admin/bookings}"><i class="bi bi-bookmark-check" aria-hidden="true"></i> Booking Management</a>
             <a th:href="@{/admin/inquiries}"><i class="bi bi-chat-dots" aria-hidden="true"></i> Inquiry Management</a>
             <a th:href="@{/admin/site-visits}"><i class="bi bi-calendar2-check" aria-hidden="true"></i> Site Visit Management</a>
-            <a href="#"><i class="bi bi-credit-card" aria-hidden="true"></i> Payment Management</a>
+            <a th:href="@{/admin/payments}"><i class="bi bi-credit-card" aria-hidden="true"></i> Payment Management</a>
             <a href="#"><i class="bi bi-megaphone" aria-hidden="true"></i> Marketing & Promotions</a>
             <a href="#"><i class="bi bi-people" aria-hidden="true"></i> Customer Management</a>
             <a href="#"><i class="bi bi-star" aria-hidden="true"></i> Reviews & Feedback</a>
@@ -56,12 +56,14 @@
             <article class="dashboard-stat"><i class="bi bi-bookmark-check" aria-hidden="true"></i><span>Pending Bookings</span><strong th:text="${pendingBookingCount}">--</strong></article>
             <article class="dashboard-stat"><i class="bi bi-chat-dots" aria-hidden="true"></i><span>Open Inquiries</span><strong th:text="${openInquiryCount}">--</strong></article>
             <article class="dashboard-stat"><i class="bi bi-calendar2-check" aria-hidden="true"></i><span>Pending Site Visits</span><strong th:text="${pendingSiteVisitCount}">--</strong></article>
+            <article class="dashboard-stat"><i class="bi bi-credit-card" aria-hidden="true"></i><span>Pending Payments</span><strong th:text="${pendingPaymentCount}">--</strong></article>
+            <article class="dashboard-stat"><i class="bi bi-cash-coin" aria-hidden="true"></i><span>Paid Revenue</span><strong>LKR <span th:text="${paidRevenue}">0</span></strong></article>
         </div>
 
         <section class="dashboard-panel reveal">
             <h2>Module Roadmap</h2>
-            <p>Land Management, Property Verification, Inquiries, Site Visits, and Bookings are active. Payments remain a future module.</p>
-            <a class="btn btn-outline-dark" th:href="@{/admin/bookings}">Open Booking Queue</a>
+            <p>Land Management, Property Verification, Inquiries, Site Visits, Bookings, and Payments are active operational modules.</p>
+            <a class="btn btn-outline-dark" th:href="@{/admin/payments}">Open Payment Queue</a>
         </section>
     </section>
 </main>
