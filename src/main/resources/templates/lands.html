@@ -36,7 +36,7 @@
                         <label for="listingLocation">Search by location</label>
                         <div class="input-wrap">
                             <i class="bi bi-search" aria-hidden="true"></i>
-                            <input id="listingLocation" name="location" type="search" placeholder="Malabe, Panadura, Homagama">
+                            <input id="listingLocation" name="location" type="search" placeholder="Malabe, Panadura, Homagama" th:value="${selectedLocation}">
                         </div>
                     </div>
 
@@ -46,10 +46,7 @@
                             <i class="bi bi-grid-1x2" aria-hidden="true"></i>
                             <select id="listingType" name="type">
                                 <option value="">Any type</option>
-                                <option value="Residential">Residential</option>
-                                <option value="Commercial">Commercial</option>
-                                <option value="Agricultural">Agricultural</option>
-                                <option value="Mixed Use">Mixed Use</option>
+                                <option th:each="type : ${landTypes}" th:value="${type}" th:text="${type}" th:selected="${selectedType == type.name()}"></option>
                             </select>
                         </div>
                     </div>
@@ -58,7 +55,7 @@
                         <label for="minimumPrice">Minimum price</label>
                         <div class="input-wrap">
                             <i class="bi bi-cash" aria-hidden="true"></i>
-                            <input id="minimumPrice" name="minPrice" type="number" min="0" placeholder="LKR">
+                            <input id="minimumPrice" name="minPrice" type="number" min="0" placeholder="LKR" th:value="${minPrice}">
                         </div>
                     </div>
 
@@ -66,7 +63,7 @@
                         <label for="maximumPrice">Maximum price</label>
                         <div class="input-wrap">
                             <i class="bi bi-cash-stack" aria-hidden="true"></i>
-                            <input id="maximumPrice" name="maxPrice" type="number" min="0" placeholder="LKR">
+                            <input id="maximumPrice" name="maxPrice" type="number" min="0" placeholder="LKR" th:value="${maxPrice}">
                         </div>
                     </div>
 
@@ -74,7 +71,7 @@
                         <label for="minimumSize">Minimum land size</label>
                         <div class="input-wrap">
                             <i class="bi bi-rulers" aria-hidden="true"></i>
-                            <input id="minimumSize" name="minSize" type="number" min="0" step="0.1" placeholder="Perches">
+                            <input id="minimumSize" name="minSize" type="number" min="0" step="0.1" placeholder="Perches" th:value="${minSize}">
                         </div>
                     </div>
 
@@ -82,7 +79,7 @@
                         <label for="maximumSize">Maximum land size</label>
                         <div class="input-wrap">
                             <i class="bi bi-aspect-ratio" aria-hidden="true"></i>
-                            <input id="maximumSize" name="maxSize" type="number" min="0" step="0.1" placeholder="Perches">
+                            <input id="maximumSize" name="maxSize" type="number" min="0" step="0.1" placeholder="Perches" th:value="${maxSize}">
                         </div>
                     </div>
 
@@ -92,8 +89,7 @@
                             <i class="bi bi-check2-circle" aria-hidden="true"></i>
                             <select id="availability" name="availability">
                                 <option value="">Any status</option>
-                                <option value="Available">Available</option>
-                                <option value="Reserved">Reserved</option>
+                                <option th:each="status : ${landStatuses}" th:value="${status}" th:text="${status}" th:selected="${selectedAvailability == status.name()}"></option>
                             </select>
                         </div>
                     </div>
@@ -108,164 +104,68 @@
                         <i class="bi bi-search" aria-hidden="true"></i>
                         Search
                     </button>
-                    <button class="btn btn-outline-dark" type="reset">
+                    <a class="btn btn-outline-dark" th:href="@{/lands}">
                         <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
                         Reset Filters
-                    </button>
+                    </a>
                 </div>
             </form>
 
             <div class="results-toolbar reveal">
                 <div>
                     <p class="section-kicker">Available opportunities</p>
-                    <h2 id="listing-results-title">24 properties found</h2>
+                    <h2 id="listing-results-title" th:text="${resultCount == 1 ? '1 property found' : resultCount + ' properties found'}">0 properties found</h2>
                 </div>
-                <div class="sort-control">
+                <form class="sort-control" th:action="@{/lands}" method="get">
+                    <input type="hidden" name="location" th:value="${selectedLocation}">
+                    <input type="hidden" name="type" th:value="${selectedType}">
+                    <input type="hidden" name="availability" th:value="${selectedAvailability}">
+                    <input type="hidden" name="minPrice" th:value="${minPrice}">
+                    <input type="hidden" name="maxPrice" th:value="${maxPrice}">
+                    <input type="hidden" name="minSize" th:value="${minSize}">
+                    <input type="hidden" name="maxSize" th:value="${maxSize}">
                     <label for="sortBy">Sort by</label>
-                    <select id="sortBy" name="sortBy" aria-label="Sort properties">
-                        <option value="newest">Newest</option>
-                        <option value="price-low">Price Low to High</option>
-                        <option value="price-high">Price High to Low</option>
-                        <option value="largest">Largest Land Size</option>
+                    <select id="sortBy" name="sortBy" aria-label="Sort properties" onchange="this.form.submit()">
+                        <option value="newest" th:selected="${sortBy == 'newest'}">Newest</option>
+                        <option value="price-low" th:selected="${sortBy == 'price-low'}">Price Low to High</option>
+                        <option value="price-high" th:selected="${sortBy == 'price-high'}">Price High to Low</option>
+                        <option value="largest" th:selected="${sortBy == 'largest'}">Largest Land Size</option>
                     </select>
-                </div>
+                </form>
             </div>
 
-            <div class="row g-4">
-                <div class="col-md-6 col-xl-4 reveal">
-                    <article class="property-card listing-card">
-                        <div class="property-image">
-                            <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&amp;fit=crop&amp;w=900&amp;q=80" alt="Prime green land in Malabe">
-                            <span class="badge badge-verified"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
-                        </div>
-                        <div class="property-body">
-                            <div class="property-meta">
-                                <span><i class="bi bi-geo-alt" aria-hidden="true"></i> Malabe</span>
-                                <span class="status available">Available</span>
-                            </div>
-                            <h3>Prime Residential Plot</h3>
-                            <dl class="property-details">
-                                <div><dt>Size</dt><dd>12.5 Perches</dd></div>
-                                <div><dt>Type</dt><dd>Residential</dd></div>
-                                <div><dt>Price</dt><dd>LKR 7.8M</dd></div>
-                            </dl>
-                            <a class="btn btn-card" th:href="@{/lands/1}">View Details</a>
-                        </div>
-                    </article>
-                </div>
+            <div class="empty-state reveal" th:if="${#lists.isEmpty(lands)}">
+                <i class="bi bi-map" aria-hidden="true"></i>
+                <h3>No public land listings found</h3>
+                <p>Try adjusting the filters, or add listings from the admin land management screen.</p>
+                <a class="btn btn-primary" th:href="@{/admin/lands/new}">Add New Land</a>
+            </div>
 
-                <div class="col-md-6 col-xl-4 reveal">
-                    <article class="property-card listing-card">
+            <div class="row g-4" th:if="${!#lists.isEmpty(lands)}">
+                <div class="col-md-6 col-xl-4 reveal" th:each="land : ${lands}">
+                    <article class="property-card listing-card" th:classappend="${land.status.name() == 'SOLD'} ? ' sold-card'">
                         <div class="property-image">
-                            <img src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&amp;fit=crop&amp;w=900&amp;q=80" alt="Urban land opportunity in Kaduwela">
+                            <img th:src="${land.coverImageUrl}" th:alt="${land.title + ' in ' + land.location}">
                             <span class="badge badge-verified"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
                         </div>
                         <div class="property-body">
                             <div class="property-meta">
-                                <span><i class="bi bi-geo-alt" aria-hidden="true"></i> Kaduwela</span>
-                                <span class="status available">Available</span>
+                                <span><i class="bi bi-geo-alt" aria-hidden="true"></i> <span th:text="${land.location}">Malabe</span></span>
+                                <span class="status" th:classappend="${land.status.name().toLowerCase()}" th:text="${land.status}">AVAILABLE</span>
                             </div>
-                            <h3>Urban Edge Land Lot</h3>
+                            <h3 th:text="${land.title}">Prime Residential Plot</h3>
                             <dl class="property-details">
-                                <div><dt>Size</dt><dd>15 Perches</dd></div>
-                                <div><dt>Type</dt><dd>Commercial</dd></div>
-                                <div><dt>Price</dt><dd>LKR 11.2M</dd></div>
+                                <div><dt>Size</dt><dd><span th:text="${land.size}">12.5</span> <span th:text="${land.sizeUnit}">Perches</span></dd></div>
+                                <div><dt>Type</dt><dd th:text="${land.landType}">RESIDENTIAL</dd></div>
+                                <div><dt>Price</dt><dd>LKR <span th:text="${land.price}">7.8M</span></dd></div>
                             </dl>
-                            <a class="btn btn-card" th:href="@{/lands/1}">View Details</a>
-                        </div>
-                    </article>
-                </div>
-
-                <div class="col-md-6 col-xl-4 reveal">
-                    <article class="property-card listing-card">
-                        <div class="property-image">
-                            <img src="https://images.unsplash.com/photo-1448630360428-65456885c650?auto=format&amp;fit=crop&amp;w=900&amp;q=80" alt="Spacious land in Panadura">
-                            <span class="badge badge-verified"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
-                        </div>
-                        <div class="property-body">
-                            <div class="property-meta">
-                                <span><i class="bi bi-geo-alt" aria-hidden="true"></i> Panadura</span>
-                                <span class="status reserved">Reserved</span>
-                            </div>
-                            <h3>Coastal Access Property</h3>
-                            <dl class="property-details">
-                                <div><dt>Size</dt><dd>20 Perches</dd></div>
-                                <div><dt>Type</dt><dd>Residential</dd></div>
-                                <div><dt>Price</dt><dd>LKR 9.5M</dd></div>
-                            </dl>
-                            <a class="btn btn-card" th:href="@{/lands/1}">View Details</a>
-                        </div>
-                    </article>
-                </div>
-
-                <div class="col-md-6 col-xl-4 reveal">
-                    <article class="property-card listing-card">
-                        <div class="property-image">
-                            <img src="https://images.unsplash.com/photo-1516156008625-3a9d6067fab5?auto=format&amp;fit=crop&amp;w=900&amp;q=80" alt="Open green land in Homagama">
-                            <span class="badge badge-verified"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
-                        </div>
-                        <div class="property-body">
-                            <div class="property-meta">
-                                <span><i class="bi bi-geo-alt" aria-hidden="true"></i> Homagama</span>
-                                <span class="status available">Available</span>
-                            </div>
-                            <h3>Investment Ready Block</h3>
-                            <dl class="property-details">
-                                <div><dt>Size</dt><dd>18 Perches</dd></div>
-                                <div><dt>Type</dt><dd>Mixed Use</dd></div>
-                                <div><dt>Price</dt><dd>LKR 8.9M</dd></div>
-                            </dl>
-                            <a class="btn btn-card" th:href="@{/lands/1}">View Details</a>
-                        </div>
-                    </article>
-                </div>
-
-                <div class="col-md-6 col-xl-4 reveal">
-                    <article class="property-card listing-card">
-                        <div class="property-image">
-                            <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&amp;fit=crop&amp;w=900&amp;q=80" alt="Residential land near Athurugiriya">
-                            <span class="badge badge-verified"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
-                        </div>
-                        <div class="property-body">
-                            <div class="property-meta">
-                                <span><i class="bi bi-geo-alt" aria-hidden="true"></i> Athurugiriya</span>
-                                <span class="status available">Available</span>
-                            </div>
-                            <h3>Quiet Suburban Land</h3>
-                            <dl class="property-details">
-                                <div><dt>Size</dt><dd>10 Perches</dd></div>
-                                <div><dt>Type</dt><dd>Residential</dd></div>
-                                <div><dt>Price</dt><dd>LKR 6.4M</dd></div>
-                            </dl>
-                            <a class="btn btn-card" th:href="@{/lands/1}">View Details</a>
-                        </div>
-                    </article>
-                </div>
-
-                <div class="col-md-6 col-xl-4 reveal">
-                    <article class="property-card listing-card">
-                        <div class="property-image">
-                            <img src="https://images.unsplash.com/photo-1605146769289-440113cc3d00?auto=format&amp;fit=crop&amp;w=900&amp;q=80" alt="Large land in Piliyandala">
-                            <span class="badge badge-verified"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
-                        </div>
-                        <div class="property-body">
-                            <div class="property-meta">
-                                <span><i class="bi bi-geo-alt" aria-hidden="true"></i> Piliyandala</span>
-                                <span class="status reserved">Reserved</span>
-                            </div>
-                            <h3>Lake Road Family Plot</h3>
-                            <dl class="property-details">
-                                <div><dt>Size</dt><dd>22 Perches</dd></div>
-                                <div><dt>Type</dt><dd>Residential</dd></div>
-                                <div><dt>Price</dt><dd>LKR 10.6M</dd></div>
-                            </dl>
-                            <a class="btn btn-card" th:href="@{/lands/1}">View Details</a>
+                            <a class="btn btn-card" th:href="@{/lands/{id}(id=${land.id})}">View Details</a>
                         </div>
                     </article>
                 </div>
             </div>
 
-            <nav class="listing-pagination reveal" aria-label="Property results pagination">
+            <nav class="listing-pagination reveal" aria-label="Property results pagination" th:if="${!#lists.isEmpty(lands)}">
                 <a class="page-link disabled" href="#" aria-disabled="true">Previous</a>
                 <a class="page-link active" href="#" aria-current="page">1</a>
                 <a class="page-link" href="#">2</a>

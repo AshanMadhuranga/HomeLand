@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${land.id == null ? 'LandHub Admin | Add Land' : 'LandHub Admin | Edit Land'}">LandHub Admin | Land Form</title>
+
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main id="main-content" class="admin-shell">
+    <section class="admin-header">
+        <div class="container">
+            <div class="admin-header-row reveal">
+                <div>
+                    <p class="section-kicker">Admin land editor</p>
+                    <h1 th:text="${land.id == null ? 'Add New Land' : 'Edit Land Listing'}">Add New Land</h1>
+                    <p>Manage the core land listing data that will later connect with booking, inquiry, and verification modules.</p>
+                </div>
+                <a class="btn btn-outline-light" th:href="@{/admin/lands}">
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                    Back to Listings
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="admin-content section-padding">
+        <div class="container">
+            <form class="admin-form-card reveal"
+                  th:object="${land}"
+                  th:action="${land.id == null} ? @{/admin/lands} : @{/admin/lands/{id}/update(id=${land.id})}"
+                  method="post"
+                  enctype="multipart/form-data"
+                  novalidate>
+                <div class="alert alert-danger" role="alert" th:if="${#fields.hasGlobalErrors()}">
+                    <p th:each="error : ${#fields.globalErrors()}" th:text="${error}">There was a problem saving this listing.</p>
+                </div>
+
+                <div class="form-section">
+                    <h2>Basic Information</h2>
+                    <div class="admin-form-grid">
+                        <div class="form-field span-2">
+                            <label for="title">Title</label>
+                            <input id="title" type="text" th:field="*{title}" placeholder="Prime Residential Plot">
+                            <p class="field-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></p>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="location">Location</label>
+                            <input id="location" type="text" th:field="*{location}" placeholder="Malabe">
+                            <p class="field-error" th:if="${#fields.hasErrors('location')}" th:errors="*{location}"></p>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="district">District</label>
+                            <input id="district" type="text" th:field="*{district}" placeholder="Colombo">
+                            <p class="field-error" th:if="${#fields.hasErrors('district')}" th:errors="*{district}"></p>
+                        </div>
+
+                        <div class="form-field span-2">
+                            <label for="address">Address</label>
+                            <input id="address" type="text" th:field="*{address}" placeholder="No. 12, Lake Road">
+                            <p class="field-error" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>Pricing and Land Details</h2>
+                    <div class="admin-form-grid">
+                        <div class="form-field">
+                            <label for="price">Price</label>
+                            <input id="price" type="number" min="0" step="0.01" th:field="*{price}" placeholder="7800000">
+                            <p class="field-error" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></p>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="size">Land Size</label>
+                            <input id="size" type="number" min="0" step="0.01" th:field="*{size}" placeholder="12.5">
+                            <p class="field-error" th:if="${#fields.hasErrors('size')}" th:errors="*{size}"></p>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="sizeUnit">Size Unit</label>
+                            <select id="sizeUnit" th:field="*{sizeUnit}">
+                                <option value="">Select unit</option>
+                                <option th:each="unit : ${sizeUnits}" th:value="${unit}" th:text="${unit}"></option>
+                            </select>
+                            <p class="field-error" th:if="${#fields.hasErrors('sizeUnit')}" th:errors="*{sizeUnit}"></p>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="landType">Land Type</label>
+                            <select id="landType" th:field="*{landType}">
+                                <option value="">Select type</option>
+                                <option th:each="type : ${landTypes}" th:value="${type}" th:text="${type}"></option>
+                            </select>
+                            <p class="field-error" th:if="${#fields.hasErrors('landType')}" th:errors="*{landType}"></p>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="status">Status</label>
+                            <select id="status" th:field="*{status}">
+                                <option th:each="status : ${landStatuses}" th:value="${status}" th:text="${status}"></option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>Description and Utilities</h2>
+                    <div class="admin-form-grid">
+                        <div class="form-field span-2">
+                            <label for="description">Description</label>
+                            <textarea id="description" rows="6" th:field="*{description}" placeholder="Describe the property, surroundings, access, and suitability."></textarea>
+                            <p class="field-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></p>
+                        </div>
+
+                        <label class="form-check-card" for="roadAccess">
+                            <input id="roadAccess" type="checkbox" th:field="*{roadAccess}">
+                            <span><i class="bi bi-signpost" aria-hidden="true"></i> Road Access</span>
+                        </label>
+
+                        <label class="form-check-card" for="waterAvailable">
+                            <input id="waterAvailable" type="checkbox" th:field="*{waterAvailable}">
+                            <span><i class="bi bi-droplet" aria-hidden="true"></i> Water Available</span>
+                        </label>
+
+                        <label class="form-check-card" for="electricityAvailable">
+                            <input id="electricityAvailable" type="checkbox" th:field="*{electricityAvailable}">
+                            <span><i class="bi bi-lightning-charge" aria-hidden="true"></i> Electricity Available</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>Property Images</h2>
+                    <div class="upload-panel">
+                        <i class="bi bi-images" aria-hidden="true"></i>
+                        <div>
+                            <label for="imageFiles">Upload land images</label>
+                            <input id="imageFiles" type="file" name="imageFiles" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple>
+                            <p>JPG, PNG, or WEBP only. Maximum 5MB per image. The first uploaded image becomes the cover if no cover exists.</p>
+                        </div>
+                    </div>
+
+                    <div class="existing-images" th:if="${land.id != null && !#lists.isEmpty(land.images)}">
+                        <img th:each="image : ${land.images}" th:src="${image.imageUrl}" th:alt="${land.title + ' image'}">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                        <span th:text="${land.id == null ? 'Create Listing' : 'Update Listing'}">Save Listing</span>
+                    </button>
+                    <a class="btn btn-outline-dark" th:href="@{/admin/lands}">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>
