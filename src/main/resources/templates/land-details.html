@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -141,15 +141,27 @@
                             This listing is currently marked as <strong th:text="${land.status}">SOLD</strong>.
                             It can be viewed for transparency, but it is not bookable right now.
                         </p>
-                        <a class="btn btn-primary" th:href="@{/inquiries/new}">
+                        <a class="btn btn-primary" sec:authorize="isAuthenticated() and hasRole('CUSTOMER')" th:href="@{/customer/inquiries/new/{id}(id=${land.id})}" th:classappend="${land.status.name() == 'SOLD'} ? ' disabled'" th:attr="aria-disabled=${land.status.name() == 'SOLD'}">
                             <i class="bi bi-chat-dots" aria-hidden="true"></i>
                             Send Inquiry
                         </a>
-                        <a class="btn btn-outline-dark" th:href="@{/site-visits/new}" th:classappend="${!land.bookable} ? ' disabled'" th:attr="aria-disabled=${!land.bookable}">
+                        <a class="btn btn-primary" sec:authorize="!isAuthenticated()" th:href="@{/login}">
+                            <i class="bi bi-chat-dots" aria-hidden="true"></i>
+                            Send Inquiry
+                        </a>
+                        <a class="btn btn-outline-dark" sec:authorize="isAuthenticated() and hasRole('CUSTOMER')" th:href="@{/customer/site-visits/new/{id}(id=${land.id})}" th:classappend="${!land.bookable} ? ' disabled'" th:attr="aria-disabled=${!land.bookable}">
                             <i class="bi bi-calendar2-check" aria-hidden="true"></i>
                             Request Site Visit
                         </a>
-                        <a class="btn btn-accent" th:href="@{/bookings/new}" th:classappend="${!land.bookable} ? ' disabled'" th:attr="aria-disabled=${!land.bookable}">
+                        <a class="btn btn-outline-dark" sec:authorize="!isAuthenticated()" th:href="@{/login}" th:classappend="${!land.bookable} ? ' disabled'" th:attr="aria-disabled=${!land.bookable}">
+                            <i class="bi bi-calendar2-check" aria-hidden="true"></i>
+                            Request Site Visit
+                        </a>
+                        <a class="btn btn-accent" sec:authorize="isAuthenticated() and hasRole('CUSTOMER')" th:href="@{/customer/bookings/new/{id}(id=${land.id})}" th:classappend="${!land.bookable} ? ' disabled'" th:attr="aria-disabled=${!land.bookable}">
+                            <i class="bi bi-bookmark-check" aria-hidden="true"></i>
+                            Book This Land
+                        </a>
+                        <a class="btn btn-accent" sec:authorize="!isAuthenticated()" th:href="@{/login}" th:classappend="${!land.bookable} ? ' disabled'" th:attr="aria-disabled=${!land.bookable}">
                             <i class="bi bi-bookmark-check" aria-hidden="true"></i>
                             Book This Land
                         </a>
