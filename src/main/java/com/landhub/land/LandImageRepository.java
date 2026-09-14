@@ -1,4 +1,4 @@
-package com.landhub.land;
+ package com.landhub.land;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

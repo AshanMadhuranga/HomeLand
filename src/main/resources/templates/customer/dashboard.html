@@ -25,7 +25,7 @@
             <a th:href="@{/customer/inquiries}"><i class="bi bi-chat-dots" aria-hidden="true"></i> My Inquiries</a>
             <a th:href="@{/customer/site-visits}"><i class="bi bi-calendar2-check" aria-hidden="true"></i> My Site Visits</a>
             <a th:href="@{/customer/bookings}"><i class="bi bi-bookmark-check" aria-hidden="true"></i> My Bookings</a>
-            <a href="#"><i class="bi bi-credit-card" aria-hidden="true"></i> My Payments</a>
+            <a th:href="@{/customer/payments}"><i class="bi bi-credit-card" aria-hidden="true"></i> My Payments</a>
             <a href="#"><i class="bi bi-star" aria-hidden="true"></i> My Reviews</a>
             <a href="#"><i class="bi bi-person" aria-hidden="true"></i> My Profile</a>
         </nav>
@@ -51,7 +51,8 @@
             <article class="dashboard-stat"><i class="bi bi-bookmark-check" aria-hidden="true"></i><span>Bookings</span><strong th:text="${customerBookingCount}">0</strong></article>
             <article class="dashboard-stat"><i class="bi bi-chat-dots" aria-hidden="true"></i><span>Inquiries</span><strong th:text="${customerInquiryCount}">0</strong></article>
             <article class="dashboard-stat"><i class="bi bi-calendar2-check" aria-hidden="true"></i><span>Site Visits</span><strong th:text="${customerSiteVisitCount}">0</strong></article>
-            <article class="dashboard-stat"><i class="bi bi-credit-card" aria-hidden="true"></i><span>Payments</span><strong>0</strong></article>
+            <article class="dashboard-stat"><i class="bi bi-credit-card" aria-hidden="true"></i><span>Payments</span><strong th:text="${customerPaymentCount}">0</strong></article>
+            <article class="dashboard-stat"><i class="bi bi-cash-coin" aria-hidden="true"></i><span>Total Paid</span><strong>LKR <span th:text="${customerTotalPaid}">0</span></strong></article>
         </div>
 
         <section class="dashboard-panel reveal">
