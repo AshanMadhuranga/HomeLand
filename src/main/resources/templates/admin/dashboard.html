@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LandHub | Admin Dashboard</title>
+
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<main id="main-content" class="dashboard-shell">
+    <aside class="dashboard-sidebar">
+        <a class="footer-brand" th:href="@{/}">
+            <span class="brand-mark" aria-hidden="true">LH</span>
+            <span>LandHub</span>
+        </a>
+        <nav aria-label="Admin dashboard navigation">
+            <a class="active" th:href="@{/admin/dashboard}"><i class="bi bi-grid" aria-hidden="true"></i> Dashboard</a>
+            <a th:href="@{/admin/lands}"><i class="bi bi-map" aria-hidden="true"></i> Land Management</a>
+            <a href="#"><i class="bi bi-shield-check" aria-hidden="true"></i> Property Verification</a>
+            <a href="#"><i class="bi bi-bookmark-check" aria-hidden="true"></i> Booking Management</a>
+            <a href="#"><i class="bi bi-chat-dots" aria-hidden="true"></i> Inquiry Management</a>
+            <a href="#"><i class="bi bi-credit-card" aria-hidden="true"></i> Payment Management</a>
+            <a href="#"><i class="bi bi-megaphone" aria-hidden="true"></i> Marketing & Promotions</a>
+            <a href="#"><i class="bi bi-people" aria-hidden="true"></i> Customer Management</a>
+            <a href="#"><i class="bi bi-star" aria-hidden="true"></i> Reviews & Feedback</a>
+        </nav>
+        <form th:action="@{/logout}" method="post">
+            <button class="btn btn-outline-light w-100" type="submit">
+                <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                Logout
+            </button>
+        </form>
+    </aside>
+
+    <section class="dashboard-main">
+        <header class="dashboard-header reveal">
+            <div>
+                <p class="section-kicker">Operations dashboard</p>
+                <h1>Admin Control Center</h1>
+                <p>Manage LandHub modules from a role-protected workspace. Logged in as <span sec:authentication="name">admin</span>.</p>
+            </div>
+            <a class="btn btn-primary" th:href="@{/admin/lands}">Manage Lands</a>
+        </header>
+
+        <div class="dashboard-grid admin-dashboard-grid reveal">
+            <article class="dashboard-stat"><i class="bi bi-map" aria-hidden="true"></i><span>Total Lands</span><strong>--</strong></article>
+            <article class="dashboard-stat"><i class="bi bi-check2-circle" aria-hidden="true"></i><span>Available Lands</span><strong>--</strong></article>
+            <article class="dashboard-stat"><i class="bi bi-shield-check" aria-hidden="true"></i><span>Pending Verification</span><strong>--</strong></article>
+            <article class="dashboard-stat"><i class="bi bi-bookmark-check" aria-hidden="true"></i><span>Pending Bookings</span><strong>--</strong></article>
+            <article class="dashboard-stat"><i class="bi bi-people" aria-hidden="true"></i><span>Customers</span><strong>--</strong></article>
+            <article class="dashboard-stat"><i class="bi bi-cash-stack" aria-hidden="true"></i><span>Revenue</span><strong>--</strong></article>
+        </div>
+
+        <section class="dashboard-panel reveal">
+            <h2>Module Roadmap</h2>
+            <p>Land Management is active. Verification, bookings, inquiries, payments, marketing, and review workflows remain placeholders for future modules.</p>
+            <a class="btn btn-outline-dark" th:href="@{/admin/lands/new}">Add Land Listing</a>
+        </section>
+    </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

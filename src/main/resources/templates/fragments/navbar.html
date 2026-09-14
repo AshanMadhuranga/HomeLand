@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
 <body>
 <nav th:fragment="navbar" class="navbar navbar-expand-lg fixed-top landhub-navbar" aria-label="Primary navigation">
     <div class="container">
@@ -23,13 +23,31 @@
                 <li class="nav-item"><a class="nav-link" th:href="@{/contact}">Contact</a></li>
             </ul>
 
-            <div class="navbar-actions">
+            <div class="navbar-actions" sec:authorize="!isAuthenticated()">
                 <a class="nav-auth-link" th:href="@{/login}">Login</a>
                 <a class="nav-auth-link" th:href="@{/register}">Create Account</a>
                 <a class="btn btn-nav" th:href="@{/lands}">
                     <i class="bi bi-map" aria-hidden="true"></i>
                     Explore Lands
                 </a>
+            </div>
+            <div class="navbar-actions" sec:authorize="hasRole('CUSTOMER')">
+                <a class="nav-auth-link" th:href="@{/customer/dashboard}">My Dashboard</a>
+                <form class="logout-form" th:action="@{/logout}" method="post">
+                    <button class="btn btn-nav" type="submit">
+                        <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
+            <div class="navbar-actions" sec:authorize="hasAnyRole('ADMIN','STAFF','VERIFICATION_OFFICER','MARKETING_STAFF')">
+                <a class="nav-auth-link" th:href="@{/admin/dashboard}">Admin Dashboard</a>
+                <form class="logout-form" th:action="@{/logout}" method="post">
+                    <button class="btn btn-nav" type="submit">
+                        <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                        Logout
+                    </button>
+                </form>
             </div>
         </div>
     </div>
