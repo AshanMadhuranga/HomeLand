@@ -96,8 +96,9 @@
                 </div>
 
                 <div class="filter-actions">
+                    <input type="hidden" name="verifiedOnlyTouched" value="true">
                     <label class="verified-check" for="verifiedOnly">
-                        <input id="verifiedOnly" name="verifiedOnly" type="checkbox" checked>
+                        <input id="verifiedOnly" name="verifiedOnly" type="checkbox" value="true" th:checked="${selectedVerifiedOnly}">
                         <span>Verified only</span>
                     </label>
                     <button class="btn btn-primary" type="submit">
@@ -124,6 +125,8 @@
                     <input type="hidden" name="maxPrice" th:value="${maxPrice}">
                     <input type="hidden" name="minSize" th:value="${minSize}">
                     <input type="hidden" name="maxSize" th:value="${maxSize}">
+                    <input type="hidden" name="verifiedOnlyTouched" value="true">
+                    <input type="hidden" name="verifiedOnly" th:value="${selectedVerifiedOnly}">
                     <label for="sortBy">Sort by</label>
                     <select id="sortBy" name="sortBy" aria-label="Sort properties" onchange="this.form.submit()">
                         <option value="newest" th:selected="${sortBy == 'newest'}">Newest</option>
@@ -146,7 +149,7 @@
                     <article class="property-card listing-card" th:classappend="${land.status.name() == 'SOLD'} ? ' sold-card'">
                         <div class="property-image">
                             <img th:src="${land.coverImageUrl}" th:alt="${land.title + ' in ' + land.location}">
-                            <span class="badge badge-verified"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
+                            <span class="badge badge-verified" th:if="${verifiedLandIds.contains(land.id)}"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
                         </div>
                         <div class="property-body">
                             <div class="property-meta">

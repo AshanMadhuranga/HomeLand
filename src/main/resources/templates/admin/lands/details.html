@@ -86,6 +86,10 @@
                             <i class="bi bi-pencil-square" aria-hidden="true"></i>
                             Edit Listing
                         </a>
+                        <a class="btn btn-card" th:href="@{/verification/new/{landId}(landId=${land.id})}">
+                            <i class="bi bi-shield-plus" aria-hidden="true"></i>
+                            Create Verification Request
+                        </a>
                         <form th:action="@{/admin/lands/{id}/delete(id=${land.id})}" method="post">
                             <button class="btn btn-danger-soft w-100" type="submit" th:disabled="${land.status.name() == 'INACTIVE'}">
                                 <i class="bi bi-archive" aria-hidden="true"></i>
