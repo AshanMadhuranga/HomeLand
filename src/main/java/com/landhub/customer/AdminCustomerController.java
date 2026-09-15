@@ -1,7 +1,6 @@
 package com.landhub.customer;
 
 import com.landhub.auth.Role;
-import com.landhub.auth.User;
 import com.landhub.auth.UserService;
 import com.landhub.booking.BookingService;
 import com.landhub.feedback.FeedbackService;
