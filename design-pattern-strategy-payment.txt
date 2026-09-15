@@ -1,0 +1,236 @@
+DESIGN PATTERN: Strategy Pattern
+MODULE: Payment & Transaction Management
+
+PROBLEM
+Before this change, PaymentService handled payment-method-specific behavior directly.
+The create payment flow contained conditional checks for method-specific fields:
+
+- BANK_TRANSFER required a bank reference.
+- CHEQUE required a cheque number.
+- CASH and DEMO_CARD_GATEWAY did not require extra method details.
+- New payments were initialized as PENDING inside PaymentService.
+
+This made PaymentService responsible for both common payment rules and individual
+payment method behavior. If a new payment method is added later, PaymentService
+would need more conditional logic.
+
+SOLUTION
+The Strategy Design Pattern was introduced for payment method behavior.
+
+PaymentService now handles common payment workflow rules:
+
+- customer/booking ownership checks
+- approved booking validation
+- reserved land validation
+- amount validation
+- remaining balance validation
+- transaction reference generation
+- persistence
+- payment completion flow
+- pessimistic locking for write/update operations
+
+Each payment method now has its own strategy class for method-specific validation
+and initialization.
+
+PARTICIPANTS
+
+Strategy interface:
+- src/main/java/com/landhub/payment/strategy/PaymentStrategy.java:1-13
+
+Concrete strategies:
+- src/main/java/com/landhub/payment/strategy/DemoCardPaymentStrategy.java:1-25
+- src/main/java/com/landhub/payment/strategy/BankTransferPaymentStrategy.java:1-31
+- src/main/java/com/landhub/payment/strategy/CashPaymentStrategy.java:1-25
+- src/main/java/com/landhub/payment/strategy/ChequePaymentStrategy.java:1-31
+
+Strategy factory/resolver:
+- src/main/java/com/landhub/payment/strategy/PaymentStrategyFactory.java:1-30
+
+Context using the strategy:
+- src/main/java/com/landhub/payment/PaymentService.java:9-10
+- src/main/java/com/landhub/payment/PaymentService.java:29-38
+- src/main/java/com/landhub/payment/PaymentService.java:79-108
+
+Tests:
+- src/test/java/com/landhub/payment/PaymentServiceTest.java:1-268
+- src/test/java/com/landhub/payment/PaymentStrategyTest.java:1-119
+
+CLASS DIAGRAM
+
+PaymentService
+  |
+  | uses
+  v
+PaymentStrategyFactory
+  |
+  | resolves by PaymentMethod
+  v
+PaymentStrategy
+  |-- DemoCardPaymentStrategy
+  |-- BankTransferPaymentStrategy
+  |-- CashPaymentStrategy
+  |-- ChequePaymentStrategy
+
+PaymentStrategy interface
+
+- supports()
+  Returns the PaymentMethod handled by the strategy.
+
+- validate(Payment payment)
+  Runs method-specific validation.
+
+- initialize(Payment payment)
+  Initializes the payment for that method.
+
+CONCRETE STRATEGY RESPONSIBILITIES
+
+DemoCardPaymentStrategy
+- Supports DEMO_CARD_GATEWAY.
+- No extra creation details are required.
+- Initializes payment status as PENDING.
+
+BankTransferPaymentStrategy
+- Supports BANK_TRANSFER.
+- Requires bankReference.
+- Initializes payment status as PENDING.
+
+CashPaymentStrategy
+- Supports CASH.
+- No extra creation details are required.
+- Initializes payment status as PENDING.
+
+ChequePaymentStrategy
+- Supports CHEQUE.
+- Requires chequeNumber.
+- Initializes payment status as PENDING.
+
+PAYMENTSERVICE CHANGES
+
+PaymentService now receives PaymentStrategyFactory through constructor injection:
+- src/main/java/com/landhub/payment/PaymentService.java:29-38
+
+In createCustomerPayment, PaymentService:
+
+1. Finds the customer's booking.
+2. Applies common payment validation.
+3. Resolves the selected PaymentMethod.
+4. Builds the Payment entity.
+5. Gets the matching PaymentStrategy from PaymentStrategyFactory.
+6. Calls strategy.validate(payment).
+7. Calls strategy.initialize(payment).
+8. Saves the payment.
+
+Implementation:
+- src/main/java/com/landhub/payment/PaymentService.java:79-108
+
+METHOD-SPECIFIC CONDITIONALS REMOVED
+
+Removed from PaymentService:
+- validateMethodDetails(...)
+- if BANK_TRANSFER then require bank reference
+- if CHEQUE then require cheque number
+
+These rules now live in:
+- BankTransferPaymentStrategy.java
+- ChequePaymentStrategy.java
+
+METHOD-SPECIFIC CHECKS THAT REMAIN
+
+Some payment method checks still remain intentionally because they are route and
+workflow guards, not creation strategy selection:
+
+- src/main/java/com/landhub/payment/PaymentService.java:111-125
+  simulateDemoSuccess and simulateDemoFailure only allow DEMO_CARD_GATEWAY.
+
+- src/main/java/com/landhub/payment/CustomerPaymentController.java:73-81
+  After creating a demo gateway payment, the customer is redirected to the demo
+  gateway page.
+
+- src/main/java/com/landhub/payment/CustomerPaymentController.java:139-149
+  The demo gateway page rejects non-DEMO_CARD_GATEWAY payments.
+
+These checks preserve existing business behavior and prevent customers from using
+the demo gateway for cash, cheque, or bank transfer payments.
+
+BUSINESS RULES PRESERVED
+
+The Strategy Pattern change does not remove existing common payment rules:
+
+- Only the payment owner can create/view customer payments through the existing
+  controller/service flow.
+- Payments still require an approved booking.
+- The booking land must still be reserved for payment.
+- Payment amount must be greater than zero.
+- Payment amount cannot exceed the remaining booking balance.
+- Failed payments are not counted as paid because summaries still count only
+  PaymentStatus.PAID.
+- Booking completion after full payment is still handled after markPaid.
+- Transaction references are still generated by PaymentService.
+
+CONCURRENCY PROTECTION PRESERVED
+
+The Strategy Pattern change does not remove pessimistic locking from payment
+write/update operations.
+
+PaymentService still uses the existing booking update path before marking a
+payment as paid:
+
+- src/main/java/com/landhub/payment/PaymentService.java:180-195
+
+This keeps locking for payment processing and booking completion behavior outside
+the strategy classes, where it belongs.
+
+WHY STRATEGY PATTERN WAS CHOSEN
+
+Strategy was chosen because payment method behavior varies by payment method,
+while the overall payment creation workflow stays the same.
+
+The pattern allows each payment method to define its own validation and
+initialization without growing PaymentService with more if/else blocks.
+
+BENEFITS
+
+- Cleaner PaymentService.
+- Method-specific rules are isolated in separate classes.
+- New payment methods can be added by creating another PaymentStrategy.
+- Existing common payment validation stays centralized.
+- Existing payment workflow and security behavior are preserved.
+- The design is easier to explain for a university assignment because each
+  payment method is a concrete strategy.
+
+VIVA EXPLANATION
+
+In the Payment module, I used the Strategy Design Pattern to separate different
+payment method behaviors from the main PaymentService.
+
+PaymentService is the context. It manages the common payment workflow, such as
+checking the booking, validating the amount, generating a transaction reference,
+and saving the payment.
+
+PaymentStrategy is the interface. Each concrete strategy represents one payment
+method. For example, BankTransferPaymentStrategy validates the bank reference,
+ChequePaymentStrategy validates the cheque number, and CashPaymentStrategy and
+DemoCardPaymentStrategy initialize normal pending payments without extra fields.
+
+PaymentStrategyFactory chooses the correct strategy based on PaymentMethod.
+This avoids method-specific if/else validation inside PaymentService. If a new
+payment method is added later, I can add a new strategy class instead of changing
+the main service logic.
+
+The existing payment business rules and locking behavior remain in PaymentService
+and BookingService because they are common workflow rules, not individual payment
+method strategies.
+
+VERIFICATION
+
+Compile:
+- .\mvnw.cmd clean compile
+- Result: BUILD SUCCESS
+
+Tests:
+- .\mvnw.cmd test
+- Result: BUILD SUCCESS
+- Tests run: 50
+- Failures: 0
+- Errors: 0
+- Skipped: 0

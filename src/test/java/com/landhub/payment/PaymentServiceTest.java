@@ -7,6 +7,11 @@ import com.landhub.booking.BookingStatus;
 import com.landhub.land.Land;
 import com.landhub.land.LandStatus;
 import com.landhub.auth.UserService;
+import com.landhub.payment.strategy.BankTransferPaymentStrategy;
+import com.landhub.payment.strategy.CashPaymentStrategy;
+import com.landhub.payment.strategy.ChequePaymentStrategy;
+import com.landhub.payment.strategy.DemoCardPaymentStrategy;
+import com.landhub.payment.strategy.PaymentStrategyFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +51,13 @@ class PaymentServiceTest {
 
     @BeforeEach
     void setUp() {
-        paymentService = new PaymentService(paymentRepository, bookingService, userService);
+        PaymentStrategyFactory paymentStrategyFactory = new PaymentStrategyFactory(List.of(
+                new DemoCardPaymentStrategy(),
+                new BankTransferPaymentStrategy(),
+                new CashPaymentStrategy(),
+                new ChequePaymentStrategy()
+        ));
+        paymentService = new PaymentService(paymentRepository, bookingService, userService, paymentStrategyFactory);
         customer = new User();
         customer.setEmail("customer@example.com");
         processor = new User();

@@ -264,6 +264,11 @@ public class PromotionService {
                 && promotion.getDiscountAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Discount amount must be greater than zero.");
         }
+        if (promotion.getDiscountAmount() != null
+                && promotion.getLand().getPrice() != null
+                && promotion.getDiscountAmount().compareTo(promotion.getLand().getPrice()) >= 0) {
+            throw new IllegalArgumentException("Discount amount must be less than the original land price.");
+        }
         if (promotion.isActive()) {
             validatePublicLand(promotion.getLand());
             if (!verificationService.hasApprovedVerification(promotion.getLand().getId())) {

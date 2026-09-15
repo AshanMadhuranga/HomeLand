@@ -144,7 +144,13 @@ public class MarketingController {
 
     @PostMapping("/{id}/activate")
     public String activate(@PathVariable Long id, Authentication authentication, RedirectAttributes redirectAttributes) {
-        return changeStatus(() -> promotionService.activate(id, currentUser(authentication)), "Promotion activated.", id, redirectAttributes);
+        try {
+            promotionService.activate(id, currentUser(authentication));
+            redirectAttributes.addFlashAttribute("successMessage", "Promotion activated successfully.");
+        } catch (IllegalArgumentException exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Promotion cannot be activated because " + lowercaseFirst(exception.getMessage()));
+        }
+        return "redirect:/marketing/" + id;
     }
 
     @PostMapping("/{id}/cancel")
@@ -197,6 +203,13 @@ public class MarketingController {
     private User currentUser(Authentication authentication) {
         return userService.findByEmail(authentication.getName())
                 .orElseThrow(() -> new IllegalArgumentException("Authenticated marketing account was not found."));
+    }
+
+    private String lowercaseFirst(String message) {
+        if (message == null || message.isBlank()) {
+            return "it does not meet the activation rules.";
+        }
+        return Character.toLowerCase(message.charAt(0)) + message.substring(1);
     }
 
     @FunctionalInterface

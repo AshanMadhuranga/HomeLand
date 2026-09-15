@@ -146,7 +146,14 @@ public class CustomerPaymentController {
                         redirectAttributes.addFlashAttribute("errorMessage", "This payment does not use the demo gateway.");
                         return "redirect:/customer/payments/" + id;
                     }
+                    if (!payment.isPending()) {
+                        redirectAttributes.addFlashAttribute("errorMessage", "This demo payment has already been processed.");
+                        return "redirect:/customer/payments/" + id;
+                    }
                     model.addAttribute("payment", payment);
+                    model.addAttribute("booking", payment.getBooking());
+                    model.addAttribute("land", payment.getBooking().getLand());
+                    model.addAttribute("summary", paymentService.getSummary(payment.getBooking()));
                     return "customer/payments/demo-gateway";
                 })
                 .orElseGet(() -> {

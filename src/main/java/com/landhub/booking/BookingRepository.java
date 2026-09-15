@@ -14,8 +14,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByCustomerEmailIgnoreCaseOrderByCreatedAtDesc(String email);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Booking> findByIdAndCustomerEmailIgnoreCase(Long id, String email);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select booking from Booking booking where booking.id = :id and lower(booking.customer.email) = lower(:email)")
+    Optional<Booking> findByIdAndCustomerEmailIgnoreCaseForUpdate(@Param("id") Long id, @Param("email") String email);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select booking from Booking booking where booking.id = :id")

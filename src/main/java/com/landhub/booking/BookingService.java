@@ -41,7 +41,7 @@ public class BookingService {
     }
 
     public Optional<Booking> findCustomerBookingForPayment(Long id, String email) {
-        return bookingRepository.findByIdAndCustomerEmailIgnoreCase(id, email);
+        return bookingRepository.findByIdAndCustomerEmailIgnoreCaseForUpdate(id, email);
     }
 
     public Booking findForPaymentUpdate(Long id) {
@@ -86,7 +86,7 @@ public class BookingService {
     }
 
     public Booking approve(Long id, BigDecimal agreedPrice, String adminNote, User reviewer) {
-        Booking booking = getBooking(id);
+        Booking booking = getBookingForUpdate(id);
 
         if (booking.getStatus() != BookingStatus.PENDING) {
             throw new IllegalArgumentException("Only pending bookings can be approved.");
@@ -107,7 +107,7 @@ public class BookingService {
     }
 
     public Booking reject(Long id, String rejectionReason, User reviewer) {
-        Booking booking = getBooking(id);
+        Booking booking = getBookingForUpdate(id);
         booking.setStatus(BookingStatus.REJECTED);
         booking.setRejectionReason(requiredText(rejectionReason, "Rejection reason is required."));
         booking.setReviewedAt(LocalDateTime.now());
@@ -116,7 +116,7 @@ public class BookingService {
     }
 
     public Booking cancelByAdmin(Long id, String adminNote, User reviewer) {
-        Booking booking = getBooking(id);
+        Booking booking = getBookingForUpdate(id);
         BookingStatus previousStatus = booking.getStatus();
         booking.setStatus(BookingStatus.CANCELLED);
         booking.setAdminNote(cleanOptional(adminNote));
@@ -132,7 +132,7 @@ public class BookingService {
     }
 
     public Booking cancelCustomerBooking(Long id, String customerEmail) {
-        Booking booking = bookingRepository.findByIdAndCustomerEmailIgnoreCase(id, customerEmail)
+        Booking booking = bookingRepository.findByIdAndCustomerEmailIgnoreCaseForUpdate(id, customerEmail)
                 .orElseThrow(() -> new IllegalArgumentException("Booking request was not found."));
 
         if (!booking.isCancellableByCustomer()) {
@@ -151,7 +151,7 @@ public class BookingService {
     }
 
     public Booking completeAfterFullPayment(Long id) {
-        Booking booking = getBooking(id);
+        Booking booking = getBookingForUpdate(id);
 
         if (booking.getStatus() == BookingStatus.COMPLETED) {
             return booking;
@@ -172,8 +172,8 @@ public class BookingService {
         return bookingRepository.countByStatus(BookingStatus.PENDING);
     }
 
-    private Booking getBooking(Long id) {
-        return bookingRepository.findById(id)
+    private Booking getBookingForUpdate(Long id) {
+        return bookingRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new IllegalArgumentException("Booking request was not found."));
     }
 

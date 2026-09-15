@@ -79,6 +79,14 @@ class PromotionServiceTest {
     }
 
     @Test
+    void rejectsFixedDiscountThatReachesOriginalPrice() {
+        assertThrows(IllegalArgumentException.class, () -> promotionService.create(
+                "Offer", null, PromotionType.DISCOUNT, PromotionStatus.ACTIVE, 1L,
+                null, new BigDecimal("1000000.00"), null, false,
+                LocalDate.now(), LocalDate.now().plusDays(5), null, null));
+    }
+
+    @Test
     void createsVerifiedAvailableActivePromotion() {
         Promotion saved = promotionService.create(
                 "Launch Offer", "Details", PromotionType.SPECIAL_OFFER, PromotionStatus.ACTIVE, 1L,

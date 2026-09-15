@@ -25,7 +25,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/", "/lands", "/lands/**", "/login", "/register", "/error",
-                                "/about", "/contact", "/promotions", "/css/**", "/js/**",
+                                "/about", "/contact", "/promotions", "/promotions/**", "/css/**", "/js/**",
                                 "/images/**", "/uploads/lands/**").permitAll()
                         .requestMatchers("/customer/**").hasRole(Role.CUSTOMER.name())
                         .requestMatchers("/verification/**").hasAnyRole(Role.ADMIN.name(), Role.VERIFICATION_OFFICER.name())

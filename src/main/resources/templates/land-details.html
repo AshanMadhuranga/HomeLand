@@ -87,6 +87,11 @@
                         <div class="verification-note" th:if="${promotion != null}">
                             <h3 th:text="${promotion.title}">Special offer</h3>
                             <p th:text="${promotion.promotionalText != null ? promotion.promotionalText : promotion.description}">Promotional offer details.</p>
+                            <dl class="details-grid">
+                                <div><dt>Original Price</dt><dd class="text-decoration-line-through">LKR <span th:text="${land.price}">0</span></dd></div>
+                                <div><dt>Discount</dt><dd th:text="${promotion.discountPercentage != null ? promotion.discountPercentage + '%' : (promotion.discountAmount != null ? 'LKR ' + promotion.discountAmount : 'Offer')}">10%</dd></div>
+                                <div><dt>Promotional Price</dt><dd><strong>LKR <span th:text="${promotion.promotionalPrice}">0</span></strong></dd></div>
+                            </dl>
                             <p class="small mb-0"><strong>Offer valid until:</strong> <span th:text="${promotion.endDate}">2026-12-31</span></p>
                         </div>
 
@@ -234,7 +239,7 @@
                             <dl class="property-details">
                                 <div><dt>Size</dt><dd><span th:text="${relatedLand.size}">15</span> <span th:text="${relatedLand.sizeUnit}">Perches</span></dd></div>
                                 <div><dt>Type</dt><dd th:text="${relatedLand.landType}">COMMERCIAL</dd></div>
-                                <div><dt>Price</dt><dd>LKR <span th:text="${relatedLand.price}">11.2M</span></dd></div>
+                                <div><dt>Price</dt><dd><span th:if="${relatedPromotion != null}" class="text-muted text-decoration-line-through">LKR <span th:text="${relatedLand.price}">11.2M</span></span> <strong th:if="${relatedPromotion != null}">LKR <span th:text="${relatedPromotion.promotionalPrice}">10.8M</span></strong><span th:if="${relatedPromotion == null}">LKR <span th:text="${relatedLand.price}">11.2M</span></span></dd></div>
                             </dl>
                             <a class="btn btn-card" th:href="@{/lands/{id}(id=${relatedLand.id})}">View Details</a>
                         </div>

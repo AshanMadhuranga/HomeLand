@@ -1,0 +1,1170 @@
+Line numbers in this document match the current codebase at generation time and may change after future edits.
+
+LandHub Major Functions CRUD / Validation / Workflow Reference
+
+Generated from the current source tree only. This is documentation only; no application logic is changed by this file.
+
+==================================================
+MAJOR FUNCTION 1 - LAND LISTING MANAGEMENT
+==================================================
+
+A. FUNCTION NAME
+Land Listing Management
+
+B. PURPOSE
+Land Listing Management stores and manages property listings, land images, public listing visibility, and listing status.
+Administrators create and edit land records; public users browse only public statuses. Verification, booking, payment,
+and promotion modules all depend on the land status and price stored here.
+
+C. MAIN ACTORS / OWNERSHIP
+Data owner: LandHub administrative staff.
+Create: ADMIN / STAFF through admin land controller and form.
+Read: ADMIN / STAFF read all admin land records; public users read public lands only; CUSTOMER reads public details.
+Update: ADMIN / STAFF update details, status, and images.
+Delete/deactivate: LandHub uses status-based deactivation for admin delete action; uploaded images can be removed by
+orphan removal when the land entity image collection changes. No customer can delete land.
+Roles: /admin/** is ADMIN, STAFF, VERIFICATION_OFFICER, MARKETING_STAFF at SecurityConfig lines 36-37, but admin land
+management is under /admin/lands and is part of the admin module. Public /lands and /lands/** are permitAll at lines 27-29.
+
+D. IMPORTANT SOURCE FILES
+FILE: src/main/java/com/landhub/land/Land.java
+Purpose: Entity/model for land listings, price, status, type, amenities, images.
+Important lines: Lines 27-97 for entity fields and image relationship; lines 99-112 lifecycle defaults; lines 115-129 transient cover image and bookable checks.
+
+FILE: src/main/java/com/landhub/land/LandImage.java
+Purpose: Entity/model for uploaded land images.
+Important lines: Lines 13-29 for table, land relation, image URL; lines 31-71 for order/cover accessors.
+
+FILE: src/main/java/com/landhub/land/LandStatus.java
+Purpose: Status enum.
+Important lines: Lines 1-9. Values: PENDING, AVAILABLE, RESERVED, SOLD, INACTIVE.
+
+FILE: src/main/java/com/landhub/land/LandType.java
+Purpose: Type enum.
+Important lines: Lines 1-9. Values: RESIDENTIAL, COMMERCIAL, AGRICULTURAL, INDUSTRIAL, OTHER.
+
+FILE: src/main/java/com/landhub/land/LandRepository.java
+Purpose: JPA repository for land listing lookup.
+Important lines: Lines 8-14.
+
+FILE: src/main/java/com/landhub/land/LandImageRepository.java
+Purpose: JPA repository for land images.
+Important lines: Lines 1-6.
+
+FILE: src/main/java/com/landhub/land/LandService.java
+Purpose: Business logic, public filtering, status transitions, image upload validation.
+Important lines: Lines 24-302.
+
+FILE: src/main/java/com/landhub/land/AdminLandController.java
+Purpose: Admin CRUD controller for land records.
+Important lines: Lines 17-133.
+
+FILE: src/main/java/com/landhub/land/LandController.java
+Purpose: Public land list and details controller.
+Important lines: Lines 17-106.
+
+FILE: src/main/java/com/landhub/land/LandUploadController.java
+Purpose: Serves uploaded land image resources.
+Important lines: Lines 19-51.
+
+E. CRUD MAPPING
+CREATE
+Controller: AdminLandController.java, lines 32-60.
+Method: createForm(...) lines 32-40; create(...) lines 42-60.
+Service: LandService.java, lines 101-109.
+Method: create(Land land, MultipartFile[] images).
+Repository: LandRepository.java, lines 8-14 through save from JpaRepository.
+Template: src/main/resources/templates/admin/lands/form.html, lines 1-177.
+Resulting state: If no status is set, Land.prePersist defaults status to PENDING at Land.java lines 99-107.
+
+READ
+Admin list/details: AdminLandController.java, list lines 26-30, details lines 64-74.
+Public list: LandController.java, lines 34-72.
+Public details: LandController.java, lines 74-106.
+Service public filtering: LandService.java, lines 39-84 and 86-90.
+Repository: LandRepository.java, lines 10-14.
+Templates: admin/lands/list.html lines 1-98; admin/lands/details.html lines 1-111; lands.html lines 1-189; land-details.html lines 1-258.
+Ownership/security: Public sees only PUBLIC_STATUSES declared at LandService.java lines 26-29 and applied at lines 39-84.
+
+UPDATE
+Controller: AdminLandController.java, edit form lines 77-88, update lines 91-112.
+Service: LandService.java, lines 111-132.
+Validation: entity bean validation in Land.java lines 34-81; image validation in LandService.java lines 231-245.
+Template: admin/lands/form.html lines 1-177.
+
+DELETE / DELETE-EQUIVALENT
+Controller: AdminLandController.java, lines 116-125.
+Service: LandService.deactivate(...) lines 134-139.
+Type: Status-based delete equivalent. It sets LandStatus.INACTIVE rather than physically deleting the row.
+Safety: Public query excludes INACTIVE by PUBLIC_STATUSES at LandService.java lines 26-29 and findPublicLands lines 39-84.
+Related hard delete: no exposed controller route physically deletes land.
+
+F. VALIDATION RULES
+Validation: Land title, description, location, district, price, size, size unit, land type are required or bounded.
+Why: Prevent incomplete listings.
+File: Land.java. Lines: 34-81. Method: Bean validation on fields.
+
+Validation: Public listing visibility limited to AVAILABLE, RESERVED, SOLD.
+Why: PENDING and INACTIVE should not be public.
+File: LandService.java. Lines: 26-29 and 39-84. Method: findPublicLands(...).
+
+Validation: Image file max 5 MB.
+Why: Prevent oversized uploads.
+File: LandService.java. Lines: 26 and 231-245. Method: validateImage(...).
+
+Validation: Image extension/content type limited to jpg, jpeg, png, webp.
+Why: Prevent unsafe upload types.
+File: LandService.java. Lines: 27-28 and 231-245. Method: validateImage(...).
+
+Validation: Uploaded image filenames are normalized and copied to upload directory.
+Why: Prevent unsafe paths and preserve files.
+File: LandService.java. Lines: 191-229. Method: storeImages(...).
+
+Validation: Bookability depends on AVAILABLE only.
+Why: Reserved/sold/inactive land should not be booked.
+File: Land.java. Lines: 125-129. Method: isBookable().
+
+G. WORKFLOW / STATUS FLOW
+Initial:
+PENDING - set by default if status is null.
+File: Land.java. Lines: 99-107.
+
+Verification approved:
+PENDING or non-public -> AVAILABLE.
+File: VerificationService.java. Lines: 135-145 calls LandService.markAvailable(...); LandService.java lines 141-146.
+
+Booking approved:
+AVAILABLE -> RESERVED.
+File: BookingService.java. Lines 88-107 calls LandService.markReserved(...); LandService.java lines 148-158.
+
+Approved booking cancelled:
+RESERVED -> AVAILABLE.
+File: BookingService.java. Lines 118-151; LandService.java lines 141-146.
+
+Full payment:
+RESERVED -> SOLD and booking -> COMPLETED.
+File: PaymentService.java. Lines 173-205; BookingService.java lines 153-169; LandService.java lines 160-165.
+
+Admin delete equivalent:
+Any status -> INACTIVE.
+File: LandService.java. Lines 134-139.
+
+H. SECURITY / ROLE ACCESS
+Public /lands and /lands/**: SecurityConfig.java lines 27-29.
+Customer routes: SecurityConfig.java line 30.
+Admin routes: SecurityConfig.java lines 33-37.
+Admin land controller route root: AdminLandController.java lines 17-18.
+Public land routes: LandController.java lines 34-75.
+
+I. DATABASE / ENTITY RELATIONSHIPS
+Land -> one-to-many LandImage with cascade/orphan removal.
+File: Land.java. Lines 95-97.
+LandImage -> many-to-one Land.
+File: LandImage.java. Lines 21-23.
+Important fields: Land.price lines 61-62, Land.landType lines 75-77, Land.status lines 79-81.
+Status enum: LandStatus.java lines 1-9.
+
+J. IMPORTANT CONTROLLER ROUTES
+GET /admin/lands - ADMIN/STAFF admin list. AdminLandController.java lines 26-30.
+GET /admin/lands/new - ADMIN/STAFF create form. Lines 32-40.
+POST /admin/lands - ADMIN/STAFF create land. Lines 42-60.
+GET /admin/lands/{id} - ADMIN/STAFF details. Lines 64-74.
+GET /admin/lands/{id}/edit - ADMIN/STAFF edit form. Lines 77-88.
+POST /admin/lands/{id}/update - ADMIN/STAFF update. Lines 91-112.
+POST /admin/lands/{id}/delete - ADMIN/STAFF status delete equivalent. Lines 116-125.
+GET /lands - public listing. LandController.java lines 34-72.
+GET /lands/{id} - public details. LandController.java lines 74-106.
+GET /uploads/lands/{filename} - public uploaded land image. LandUploadController.java lines 23-36.
+
+K. UI TEMPLATES
+src/main/resources/templates/admin/lands/list.html lines 1-98: Admin land list/actions.
+src/main/resources/templates/admin/lands/form.html lines 1-177: Create/edit form with upload fields.
+src/main/resources/templates/admin/lands/details.html lines 1-111: Admin details/status actions.
+src/main/resources/templates/lands.html lines 1-189: Public land listing, verification and promotion badges.
+src/main/resources/templates/land-details.html lines 1-258: Public land detail, promotion, review, inquiry/site visit/booking calls to action.
+
+L. TEST FILES
+No land-specific test class exists in src/test/java in the current codebase.
+Related integration checks:
+src/test/java/com/landhub/marketing/MarketingAccessAndUiTest.java lines 50-75 checks /lands renders and promotion integration contracts.
+
+==================================================
+MAJOR FUNCTION 2 - PROPERTY VERIFICATION & APPROVAL MANAGEMENT
+==================================================
+
+A. FUNCTION NAME
+Property Verification & Approval Management
+
+B. PURPOSE
+Verification manages document-backed review of land listings. It allows a verification request to be created for land,
+documents to be uploaded, and ADMIN / VERIFICATION_OFFICER users to start review, approve, reject, request more
+information, or cancel. Approval integrates with land listing management by marking the land AVAILABLE.
+
+C. MAIN ACTORS / OWNERSHIP
+Data owner: LandHub verification/admin team.
+Create: ADMIN / VERIFICATION_OFFICER through /verification/new/{landId} and POST /verification.
+Read: ADMIN / VERIFICATION_OFFICER.
+Update: ADMIN / VERIFICATION_OFFICER status transitions.
+Cancel/delete: Request cancel is soft/state change. Documents can be marked inactive/deleted from a request.
+Roles: /verification/** allowed to ADMIN and VERIFICATION_OFFICER at SecurityConfig.java line 31.
+
+D. IMPORTANT SOURCE FILES
+FILE: VerificationRequest.java
+Purpose: Verification request entity.
+Important lines: Lines 29-83 for table, land, status, reviewer, documents; lines 85-227 for lifecycle/accessors.
+
+FILE: VerificationDocument.java
+Purpose: Uploaded verification document metadata.
+Important lines: Lines 20-59 for table, request relation, type, file metadata; lines 61-147 accessors.
+
+FILE: VerificationStatus.java
+Purpose: Request status enum.
+Important lines: Lines 1-10. Values: PENDING, UNDER_REVIEW, APPROVED, REJECTED, ADDITIONAL_INFO_REQUIRED, CANCELLED.
+
+FILE: VerificationDocumentType.java
+Purpose: Document type enum.
+Important lines: Lines 1-10.
+
+FILE: VerificationRequestRepository.java
+Purpose: Request repository queries including active request and approved request lookups.
+Important lines: Lines 9-23.
+
+FILE: VerificationDocumentRepository.java
+Purpose: Document repository.
+Important lines: Lines 1-10.
+
+FILE: VerificationService.java
+Purpose: Business logic, file validation, document lifecycle, status transitions.
+Important lines: Lines 30-320.
+
+FILE: VerificationController.java
+Purpose: Verification UI controller.
+Important lines: Lines 25-216.
+
+E. CRUD MAPPING
+CREATE
+Controller: VerificationController.java create form lines 62-74; create lines 76-94.
+Service: VerificationService.create(...) lines 98-119.
+Documents: VerificationService.uploadDocuments(...) lines 181-231.
+Repository: VerificationRequestRepository.java lines 9-23; VerificationDocumentRepository.java lines 1-10.
+Template: templates/verification/form.html lines 1-91.
+Resulting state: PENDING by default in VerificationRequest field/status lifecycle, entity lines 42-44 and 85-93.
+
+READ
+Controller: VerificationController list lines 40-46; details lines 48-59; document view lines 183-191.
+Service: findAll lines 60-67; findById lines 69-72; findActiveDocument lines 74-77; loadDocumentResource lines 79-96.
+Templates: verification/list.html lines 1-107; verification/details.html lines 1-187.
+Ownership/security: role-controlled by SecurityConfig.java line 31.
+
+UPDATE
+Start review: VerificationController.java lines 98-109; VerificationService.java lines 121-133.
+Approve: Controller lines 112-123; Service lines 135-145.
+Reject: Controller lines 126-138; Service lines 147-156.
+Request info: Controller lines 141-153; Service lines 158-167.
+Upload more documents: Controller lines 168-180; Service lines 181-231.
+
+DELETE / DELETE-EQUIVALENT
+Cancel request: VerificationController.java lines 156-165; VerificationService.java lines 169-179.
+Delete document: VerificationController.java lines 195-205; VerificationService.java lines 233-242.
+Type: Status/active flag based. Request is CANCELLED and inactive; documents are removed/deactivated by service logic.
+
+F. VALIDATION RULES
+Validation: Active duplicate verification request prevention.
+Why: Avoid multiple active reviews for the same land.
+File: VerificationService.java. Lines 98-119. Method: create(...). Repository helper at VerificationRequestRepository.java lines 13-19.
+
+Validation: Land must exist.
+Why: Verification must belong to a valid land.
+File: VerificationService.java. Lines 98-119.
+
+Validation: Required submitter name/note text.
+Why: Preserve audit context.
+File: VerificationService.java. Lines 309-315. Method: requiredText(...).
+
+Validation: Uploaded document max size 10 MB.
+Why: Control storage and upload abuse.
+File: VerificationService.java. Lines 32 and 278-292.
+
+Validation: Document extensions/content types limited to pdf, jpg, jpeg, png, webp.
+Why: Prevent unsafe uploads.
+File: VerificationService.java. Lines 33-38 and 278-292.
+
+Validation: Only active request can be updated.
+Why: Preserve historical cancelled/rejected/completed records.
+File: VerificationService.java. Lines 272-276.
+
+Validation: Approval marks land AVAILABLE.
+Why: Public visibility starts only after verification approval.
+File: VerificationService.java. Lines 135-145; LandService.java lines 141-146.
+
+G. WORKFLOW / STATUS FLOW
+PENDING -> UNDER_REVIEW: VerificationService.startReview lines 121-133.
+UNDER_REVIEW/PENDING -> APPROVED: VerificationService.approve lines 135-145; Land becomes AVAILABLE.
+UNDER_REVIEW/PENDING -> REJECTED: VerificationService.reject lines 147-156.
+UNDER_REVIEW/PENDING -> ADDITIONAL_INFO_REQUIRED: VerificationService.requestAdditionalInfo lines 158-167.
+Any active review -> CANCELLED: VerificationService.cancel lines 169-179.
+
+H. SECURITY / ROLE ACCESS
+SecurityConfig.java line 31: /verification/** has ADMIN or VERIFICATION_OFFICER.
+VerificationController.java lines 25-26: route root /verification.
+Current controller methods do not add additional method-level authorization; security is URL based.
+
+I. DATABASE / ENTITY RELATIONSHIPS
+VerificationRequest -> many-to-one Land: VerificationRequest.java lines 38-40.
+VerificationRequest -> many-to-one reviewer User: lines 68-69.
+VerificationRequest -> one-to-many VerificationDocument: lines 81-83.
+VerificationDocument -> many-to-one VerificationRequest: VerificationDocument.java lines 28-29.
+Status enum: VerificationStatus.java lines 1-10.
+Document type enum: VerificationDocumentType.java lines 1-10.
+
+J. IMPORTANT CONTROLLER ROUTES
+GET /verification - list. VerificationController.java lines 40-46.
+GET /verification/{id} - details. Lines 48-59.
+GET /verification/new/{landId} - create form. Lines 62-74.
+POST /verification - create. Lines 76-94.
+POST /verification/{id}/start-review - start review. Lines 98-109.
+POST /verification/{id}/approve - approve and make land AVAILABLE. Lines 112-123.
+POST /verification/{id}/reject - reject. Lines 126-138.
+POST /verification/{id}/request-info - request info. Lines 141-153.
+POST /verification/{id}/cancel - cancel. Lines 156-165.
+POST /verification/{id}/documents - upload docs. Lines 168-180.
+GET /verification/documents/{documentId} - view doc. Lines 183-191.
+POST /verification/{id}/documents/{documentId}/delete - delete doc. Lines 195-205.
+
+K. UI TEMPLATES
+src/main/resources/templates/verification/list.html lines 1-107: Verification queue.
+src/main/resources/templates/verification/form.html lines 1-91: Request and document upload form.
+src/main/resources/templates/verification/details.html lines 1-187: Details, document list, review actions.
+
+L. TEST FILES
+No verification-specific test class exists in the current codebase.
+
+==================================================
+MAJOR FUNCTION 3 - LAND INQUIRY & BOOKING MANAGEMENT
+==================================================
+
+A. FUNCTION NAME
+Land Inquiry & Booking Management
+
+B. PURPOSE
+This function covers customer inquiry messages, site visit requests, and booking requests. Customers create and manage
+their own records; admin/staff users review and update operational status. Booking is the strongest workflow because it
+reserves land and completion after full payment sells the land.
+
+C. MAIN ACTORS / OWNERSHIP
+Data owner: Customer owns their own inquiry/site visit/booking records; LandHub staff manages admin responses.
+Create: CUSTOMER.
+Read: CUSTOMER reads own records; admin/staff reads all admin module records.
+Update: CUSTOMER can cancel pending/own records; ADMIN/STAFF can respond, approve, reject, reschedule, complete.
+Delete/cancel: Status-based cancel, not physical delete.
+Roles: Customer paths under /customer/** require CUSTOMER at SecurityConfig.java line 30. Admin paths under /admin/**
+require admin-style roles at lines 33-37.
+
+--------------------------------------------------
+3A. INQUIRY
+--------------------------------------------------
+
+D. IMPORTANT SOURCE FILES
+Inquiry.java lines 24-70: Entity relationships, subject/message/response/status.
+InquiryStatus.java lines 1-8: OPEN, RESPONDED, RESOLVED, CANCELLED.
+InquiryRepository.java lines 8-16: customer ownership lookup and status count.
+InquiryService.java lines 17-115: Business logic.
+CustomerInquiryController.java lines 15-93: Customer routes.
+AdminInquiryController.java lines 16-76: Admin routes.
+
+E. CRUD MAPPING
+CREATE: CustomerInquiryController.java lines 45-62; InquiryService.create(...) lines 49-67; templates/customer/inquiries/form.html lines 1-17. Result status: OPEN.
+READ: Customer list lines 26-30 and details lines 65-78; Admin list lines 27-31 and details lines 33-43; InquiryService customer ownership lookup lines 30-38.
+UPDATE: Admin respond lines 46-57 and service lines 69-76; resolve controller lines 60-70 and service lines 78-84.
+DELETE-EQUIVALENT: Customer cancel controller lines 81-90; service lines 86-98. Status becomes CANCELLED.
+
+F. VALIDATION RULES
+Validation: Customer email must resolve to User; land must exist.
+File: InquiryService.java. Lines 49-67.
+Validation: Subject and message required.
+File: InquiryService.java. Lines 49-67 and 109-113.
+Validation: Customer can read/cancel own inquiry only.
+File: InquiryService.java. Lines 30-38 and 86-98; InquiryRepository.java lines 10-12.
+Validation: Cancel only allowed from OPEN.
+File: InquiryService.java. Lines 86-98.
+
+G. WORKFLOW
+OPEN -> RESPONDED: InquiryService.respond lines 69-76.
+OPEN/RESPONDED -> RESOLVED: InquiryService.resolve lines 78-84.
+OPEN -> CANCELLED: InquiryService.cancelCustomerInquiry lines 86-98.
+
+J. IMPORTANT ROUTES
+GET /customer/inquiries lines 26-30.
+GET /customer/inquiries/new/{landId} lines 32-42.
+POST /customer/inquiries lines 45-62.
+GET /customer/inquiries/{id} lines 65-78.
+POST /customer/inquiries/{id}/cancel lines 81-90.
+GET /admin/inquiries lines 27-31.
+GET /admin/inquiries/{id} lines 33-43.
+POST /admin/inquiries/{id}/respond lines 46-57.
+POST /admin/inquiries/{id}/resolve lines 60-70.
+
+K. UI TEMPLATES
+customer/inquiries/list.html lines 1-32; form.html lines 1-17; details.html lines 1-11.
+admin/inquiries/list.html lines 1-7; details.html lines 1-7.
+
+--------------------------------------------------
+3B. SITE VISIT
+--------------------------------------------------
+
+D. IMPORTANT SOURCE FILES
+SiteVisit.java lines 25-73: Entity, customer, land, schedule, status, reviewer.
+SiteVisitStatus.java lines 1-10: PENDING, APPROVED, REJECTED, RESCHEDULED, COMPLETED, CANCELLED.
+SiteVisitRepository.java lines 8-16.
+SiteVisitService.java lines 19-156.
+CustomerSiteVisitController.java lines 19-99.
+AdminSiteVisitController.java lines 20-110.
+
+E. CRUD MAPPING
+CREATE: CustomerSiteVisitController.java lines 49-68; SiteVisitService.create lines 51-71; template customer/site-visits/form.html lines 1-7. Status PENDING.
+READ: Customer list/details controller lines 30-34 and 71-84; admin list/details lines 31-47; service ownership lookup lines 32-40.
+UPDATE: Admin approve lines 50-61 and service lines 73-79; reject lines 64-75 and service 81-87; reschedule lines 78-91 and service 89-98; complete lines 94-104 and service 100-105.
+DELETE-EQUIVALENT: Customer cancel lines 87-96 and service lines 107-118; status CANCELLED.
+
+F. VALIDATION RULES
+Validation: Customer email and land must exist.
+File: SiteVisitService.java. Lines 51-71.
+Validation: Preferred visit date/time must be in the future.
+File: SiteVisitService.java. Lines 134-144.
+Validation: Reject/reschedule notes sanitized.
+File: SiteVisitService.java. Lines 146-156.
+Validation: Customer can read/cancel own visits only.
+File: SiteVisitService.java. Lines 32-40 and 107-118; SiteVisitRepository.java lines 10-12.
+Validation: Cancel only allowed from PENDING or APPROVED.
+File: SiteVisitService.java. Lines 107-118.
+
+G. WORKFLOW
+PENDING -> APPROVED: service lines 73-79.
+PENDING -> REJECTED: service lines 81-87.
+PENDING/APPROVED -> RESCHEDULED: service lines 89-98.
+APPROVED/RESCHEDULED -> COMPLETED: service lines 100-105.
+PENDING/APPROVED -> CANCELLED: service lines 107-118.
+
+J. IMPORTANT ROUTES
+GET /customer/site-visits lines 30-34.
+GET /customer/site-visits/new/{landId} lines 36-46.
+POST /customer/site-visits lines 49-68.
+GET /customer/site-visits/{id} lines 71-84.
+POST /customer/site-visits/{id}/cancel lines 87-96.
+GET /admin/site-visits lines 31-35.
+GET /admin/site-visits/{id} lines 37-47.
+POST /admin/site-visits/{id}/approve lines 50-61.
+POST /admin/site-visits/{id}/reject lines 64-75.
+POST /admin/site-visits/{id}/reschedule lines 78-91.
+POST /admin/site-visits/{id}/complete lines 94-104.
+
+K. UI TEMPLATES
+customer/site-visits/list.html lines 1-7; form.html lines 1-7; details.html lines 1-7.
+admin/site-visits/list.html lines 1-4; details.html lines 1-4.
+
+--------------------------------------------------
+3C. BOOKING
+--------------------------------------------------
+
+D. IMPORTANT SOURCE FILES
+Booking.java lines 25-73: Entity, customer, land, status, agreed price, reviewer.
+BookingStatus.java lines 1-9: PENDING, APPROVED, REJECTED, CANCELLED, COMPLETED.
+BookingRepository.java lines 14-33: ownership lookup, locks, duplicate checks, counts.
+BookingService.java lines 19-190.
+CustomerBookingController.java lines 17-99.
+AdminBookingController.java lines 18-94.
+
+E. CRUD MAPPING
+CREATE: CustomerBookingController.java lines 51-66; BookingService.create lines 62-86; template customer/bookings/form.html lines 1-4. Result status PENDING.
+READ: Customer list/details lines 32-36 and 69-84; service read-only ownership lines 34-45; admin list/details lines 29-45.
+UPDATE: Admin approve lines 48-60 and BookingService.approve lines 88-107; reject lines 63-74 and service 109-116; complete after payment is service-only via BookingService.completeAfterFullPayment lines 153-169.
+DELETE-EQUIVALENT: Admin cancel lines 77-88 and service 118-132; customer cancel lines 87-96 and service 134-151.
+
+F. VALIDATION RULES
+Validation: Only AVAILABLE land can be booked.
+File: BookingService.java. Lines 62-86.
+Validation: Duplicate active booking prevention by customer/land and by land active booking.
+File: BookingService.java. Lines 21 and 62-86; BookingRepository.java lines 29-31.
+Validation: Customer reads own booking only.
+File: BookingService.java. Lines 34-45; BookingRepository.java lines 15-21.
+Validation: Approve only PENDING booking; agreed price must be > 0.
+File: BookingService.java. Lines 88-107.
+Validation: Rejection reason is required.
+File: BookingService.java. Lines 109-116 and 180-185.
+Validation: Cancellation restores land availability only when approved booking is cancelled.
+File: BookingService.java. Lines 118-151.
+Validation: Pessimistic locking for update/payment paths.
+File: BookingRepository.java. Lines 19-25; BookingService.java lines 43-51 and 175-178.
+
+G. WORKFLOW
+PENDING booking -> land remains AVAILABLE: BookingService.create lines 62-86.
+PENDING -> APPROVED and land AVAILABLE -> RESERVED: BookingService.approve lines 88-107; LandService.markReserved lines 148-158.
+PENDING -> REJECTED: BookingService.reject lines 109-116.
+APPROVED/PENDING -> CANCELLED: BookingService.cancelByAdmin lines 118-132; cancelCustomerBooking lines 134-151.
+APPROVED -> COMPLETED and land -> SOLD: BookingService.completeAfterFullPayment lines 153-169; PaymentService.completeBookingIfFullyPaid lines 199-205.
+
+J. IMPORTANT ROUTES
+GET /customer/bookings lines 32-36.
+GET /customer/bookings/new/{landId} lines 38-48.
+POST /customer/bookings lines 51-66.
+GET /customer/bookings/{id} lines 69-84.
+POST /customer/bookings/{id}/cancel lines 87-96.
+GET /admin/bookings lines 29-33.
+GET /admin/bookings/{id} lines 35-45.
+POST /admin/bookings/{id}/approve lines 48-60.
+POST /admin/bookings/{id}/reject lines 63-74.
+POST /admin/bookings/{id}/cancel lines 77-88.
+
+K. UI TEMPLATES
+customer/bookings/list.html lines 1-4; form.html lines 1-4; details.html lines 1-99.
+admin/bookings/list.html lines 1-7; details.html lines 1-7.
+
+L. TEST FILES
+No inquiry/sitevisit/booking-specific test class exists in the current codebase.
+Payment tests exercise booking payment completion integration in src/test/java/com/landhub/payment/PaymentServiceTest.java lines 1-318.
+
+==================================================
+MAJOR FUNCTION 4 - PAYMENT & TRANSACTION MANAGEMENT
+==================================================
+
+A. FUNCTION NAME
+Payment & Transaction Management
+
+B. PURPOSE
+Payment management records customer payments against approved bookings, supports multiple methods, demo gateway success/failure,
+admin status actions, receipts, summaries, and revenue counts. It preserves financial records; no physical delete route exists.
+Full effective payment completion drives booking COMPLETED and land SOLD.
+
+C. MAIN ACTORS / OWNERSHIP
+Data owner: Customer owns payments for their booking; LandHub admin/staff processes admin payment actions.
+Create: CUSTOMER creates payments for own approved booking.
+Read: CUSTOMER reads own payments; ADMIN/STAFF reads admin payment records.
+Update: CUSTOMER can simulate demo success/failure for own pending demo payment; ADMIN/STAFF can mark paid/failed/cancel/refund.
+Delete: No physical delete. Status changes preserve financial history.
+Roles: /customer/** CUSTOMER at SecurityConfig.java line 30; /admin/payments/** ADMIN or STAFF at line 33.
+
+D. IMPORTANT SOURCE FILES
+Payment.java lines 25-96: Entity relationships and payment fields.
+PaymentMethod.java lines 1-8: BANK_TRANSFER, CASH, CHEQUE, DEMO_CARD_GATEWAY.
+PaymentType.java lines 1-8: BOOKING_FEE, DEPOSIT, INSTALLMENT, FINAL_PAYMENT.
+PaymentStatus.java lines 1-9: PENDING, PAID, FAILED, CANCELLED, REFUNDED.
+PaymentSummary.java lines 1-13: Summary projection.
+PaymentRepository.java lines 8-24: ownership, booking, status, transaction reference queries.
+PaymentService.java lines 22-309: Business logic.
+CustomerPaymentController.java lines 17-197.
+AdminPaymentController.java lines 18-109.
+
+E. CRUD MAPPING
+CREATE
+Controller: CustomerPaymentController.java lines 48-98.
+Service: PaymentService.createCustomerPayment lines 74-102.
+Repository: PaymentRepository.java lines 8-24.
+Template: customer/payments/form.html lines 1-80.
+Result: PENDING payment, generated unique transaction reference.
+
+READ
+Customer list/booking payments/details/receipt: CustomerPaymentController.java lines 26-60 and 101-135.
+Admin list/details: AdminPaymentController.java lines 29-48.
+Service: customer ownership reads lines 37-50; admin reads lines 52-61; summaries lines 63-72 and 207-218.
+Templates: customer/payments/list.html lines 1-4; details.html lines 1-4; receipt.html lines 1-4; booking-summary.html lines 1-4; admin/payments/list.html lines 1-4; admin/payments/details.html lines 1-4.
+
+UPDATE
+Customer demo success/failure: CustomerPaymentController.java lines 138-187; PaymentService lines 104-118 and 173-197.
+Admin mark paid/failed/cancel/refund: AdminPaymentController.java lines 51-101; PaymentService lines 120-147.
+
+DELETE / DELETE-EQUIVALENT
+No physical delete.
+Cancel: PaymentService.cancel lines 128-134.
+Refund: PaymentService.refund lines 136-147.
+Failed: PaymentService.markFailed lines 191-197.
+Financial record preserved in Payment table.
+
+F. VALIDATION RULES
+Validation: Booking must belong to customer and be payment-updatable using locked lookup.
+File: BookingService.java lines 43-51; PaymentService.java lines 74-102.
+
+Validation: Booking must be APPROVED and land RESERVED.
+File: PaymentService.java lines 234-244.
+
+Validation: Amount must be > 0 and <= remaining balance.
+File: PaymentService.java lines 220-232.
+
+Validation: Bank transfer requires bank reference.
+File: PaymentService.java lines 246-254.
+
+Validation: Cheque requires cheque number.
+File: PaymentService.java lines 246-254.
+
+Validation: Payment status must be PENDING before paid/failed/cancel.
+File: PaymentService.java lines 173-197 and 266-270.
+
+Validation: Only PAID payment can be refunded.
+File: PaymentService.java lines 136-147 and 266-270.
+
+Validation: Failed/cancelled/refunded are excluded from effective total.
+File: PaymentService.java lines 207-218.
+
+Validation: Unique generated transaction reference.
+File: PaymentService.java lines 286-293; PaymentRepository.java line 24.
+
+Validation: Customer can access only own payments.
+File: PaymentService.java lines 37-50 and 261-264; PaymentRepository.java lines 10-14.
+
+Validation: Pessimistic booking locking/concurrency protection.
+File: BookingRepository.java lines 19-25; BookingService.java lines 43-51 and 175-178.
+
+G. WORKFLOW / STATUS FLOW
+PENDING payment created: PaymentService.createCustomerPayment lines 74-102.
+PENDING -> PAID: PaymentService.markPaid lines 173-189.
+PENDING -> FAILED: PaymentService.markFailed lines 191-197.
+PENDING -> CANCELLED: PaymentService.cancel lines 128-134.
+PAID -> REFUNDED: PaymentService.refund lines 136-147.
+Partial payment: summary remains less than booking agreed price; PaymentService.summaryFor lines 207-218.
+Full effective paid >= agreed price: PaymentService.completeBookingIfFullyPaid lines 199-205 -> BookingService.completeAfterFullPayment lines 153-169 -> land SOLD.
+Refund after completed sale: current code refunds payment status but does not reverse completed booking/sold land; PaymentService.refund lines 136-147.
+
+H. SECURITY / ROLE ACCESS
+Customer: /customer/** requires CUSTOMER at SecurityConfig.java line 30.
+Admin payments: /admin/payments/** requires ADMIN or STAFF at line 33.
+Ownership checks: PaymentService.java lines 42-50 and 261-264.
+
+I. DATABASE / ENTITY RELATIONSHIPS
+Payment -> Booking: Payment.java lines 34-36.
+Payment -> Customer User: lines 39-41.
+Payment -> processedBy User: lines 94-95.
+Important fields: payment type lines 44-46, method lines 49-51, status lines 53-55, amount line 59, unique transaction ref line 62.
+PaymentSummary is a record: PaymentSummary.java lines 1-13.
+
+J. IMPORTANT CONTROLLER ROUTES
+GET /customer/payments - list. CustomerPaymentController.java lines 26-30.
+GET /customer/bookings/{bookingId}/payments - booking payments. Lines 32-45.
+GET /customer/payments/new/{bookingId} - form. Lines 48-60.
+POST /customer/payments - create. Lines 62-98.
+GET /customer/payments/{id} - details. Lines 101-115.
+GET /customer/payments/{id}/receipt - receipt. Lines 118-135.
+GET /customer/payments/{id}/demo-gateway - demo gateway. Lines 138-162.
+POST /customer/payments/{id}/demo-success - simulate success. Lines 165-175.
+POST /customer/payments/{id}/demo-failure - simulate failure. Lines 178-187.
+GET /admin/payments - admin list. AdminPaymentController.java lines 29-34.
+GET /admin/payments/{id} - details. Lines 37-48.
+POST /admin/payments/{id}/mark-paid - mark paid. Lines 51-61.
+POST /admin/payments/{id}/mark-failed - mark failed. Lines 64-75.
+POST /admin/payments/{id}/cancel - cancel. Lines 78-88.
+POST /admin/payments/{id}/refund - refund. Lines 91-101.
+
+K. UI TEMPLATES
+customer/payments/form.html lines 1-80: Customer payment form.
+customer/payments/demo-gateway.html lines 1-103: University demo gateway success/failure.
+customer/payments/list.html lines 1-4, details.html lines 1-4, receipt.html lines 1-4, booking-summary.html lines 1-4.
+admin/payments/list.html lines 1-4, admin/payments/details.html lines 1-4.
+
+L. TEST FILES
+src/test/java/com/landhub/payment/PaymentServiceTest.java lines 1-318: service validation, status transitions, totals, full-payment completion.
+src/test/java/com/landhub/payment/PaymentAccessAndUiTest.java lines 1-135: security/UI route contracts.
+
+==================================================
+MAJOR FUNCTION 5 - MARKETING & PROMOTION MANAGEMENT
+==================================================
+
+A. FUNCTION NAME
+Marketing & Promotion Management
+
+B. PURPOSE
+Marketing manages promotional campaigns linked to land listings without changing Land.price. Admin/marketing staff can
+create, edit, activate, cancel, and deactivate promotions. Public users see only active, eligible, verified land offers
+through /promotions, /lands, land details, and the homepage.
+
+C. MAIN ACTORS / OWNERSHIP
+Data owner: LandHub marketing/admin staff.
+Create: ADMIN / MARKETING_STAFF.
+Read: ADMIN / MARKETING_STAFF admin pages; public users read active public promotions.
+Update: ADMIN / MARKETING_STAFF edit and status actions.
+Delete: Status-based cancel/deactivate, no physical delete.
+Roles: /marketing and /marketing/** require ADMIN or MARKETING_STAFF at SecurityConfig.java line 32. /promotions and
+/promotions/** are public at lines 27-29.
+
+D. IMPORTANT SOURCE FILES
+Promotion.java lines 30-121: Entity fields, land relation, discount fields, active flag, transient promotional price.
+PromotionType.java lines 1-9.
+PromotionStatus.java lines 1-10.
+PromotionRepository.java lines 8-16.
+PromotionService.java lines 22-326.
+MarketingController.java lines 21-219.
+PublicPromotionController.java lines 10-36.
+HomeController.java lines 9-22.
+
+E. CRUD MAPPING
+CREATE
+Controller: MarketingController.java lines 44-83.
+Service: PromotionService.create lines 79-109.
+Repository: PromotionRepository.java lines 8-16.
+Template: marketing/form.html lines 1-343.
+Resulting state: DRAFT by default from MarketingController.java lines 44-52; active statuses are calculated by service lines 206-218.
+
+READ
+Admin list: MarketingController.java lines 36-41; template marketing/list.html lines 1-4.
+Admin details: MarketingController.java lines 86-96; template marketing/details.html lines 1-4.
+Public list: PublicPromotionController.java lines 18-22; template promotions/list.html lines 1-4.
+Public details: PublicPromotionController.java lines 24-36; template promotions/details.html lines 1-4.
+Public land integrations: LandController.java lines 34-106; templates lands.html lines 1-189 and land-details.html lines 1-258.
+Homepage: HomeController.java lines 17-21; index.html lines 298-324.
+
+UPDATE
+Edit form: MarketingController.java lines 99-109.
+Update submit: MarketingController.java lines 112-142.
+Service update: PromotionService.java lines 111-144.
+Activate: MarketingController.java lines 145-153; PromotionService.java lines 146-160.
+
+DELETE / DELETE-EQUIVALENT
+Cancel: MarketingController.java lines 156-159; PromotionService.java lines 162-171.
+Deactivate: MarketingController.java lines 161-164; PromotionService.java lines 173-179.
+Type: Status-based. CANCELLED or INACTIVE promotions remain historical records and are not public active offers.
+
+F. VALIDATION RULES
+Validation: Only one discount method may be used.
+File: PromotionService.java. Lines 248-251. Method: validate(...).
+
+Validation: DISCOUNT promotion requires percentage or fixed amount.
+File: PromotionService.java. Lines 252-256.
+
+Validation: Percentage > 0 and <= 100.
+File: PromotionService.java. Lines 257-261.
+
+Validation: Fixed discount > 0.
+File: PromotionService.java. Lines 262-265.
+
+Validation: Fixed discount < original Land.price.
+File: PromotionService.java. Lines 266-270.
+
+Validation: Title, land, promotion type, start/end dates required; end date cannot be before start.
+File: PromotionService.java. Lines 234-247.
+
+Validation: Active promotion requires eligible public land status AVAILABLE or RESERVED.
+File: PromotionService.java. Lines 272-282.
+
+Validation: Active promotion requires approved verification.
+File: PromotionService.java. Lines 272-276; VerificationService.hasApprovedVerification lines 244-250.
+
+Validation: Cancelled/inactive cannot be activated.
+File: PromotionService.java. Lines 146-153.
+
+Validation: Public display excludes DRAFT, SCHEDULED before start date, CANCELLED, INACTIVE, EXPIRED.
+File: PromotionService.java. Lines 43-49, 191-204, and 300-308.
+
+Validation: Land.price is not modified; promotional price is transient.
+File: Promotion.java. Lines 121-139.
+
+G. WORKFLOW / STATUS FLOW
+DRAFT -> active false: PromotionService.applyStatus lines 206-211.
+Scheduled future active request -> SCHEDULED: lifecycleStatus lines 224-232.
+Current active request -> ACTIVE: lifecycleStatus lines 224-232.
+Past end date -> EXPIRED: synchronizeLifecycle lines 191-204.
+ACTIVE -> CANCELLED: PromotionService.cancel lines 162-171.
+ACTIVE -> INACTIVE: PromotionService.deactivate lines 173-179.
+
+H. SECURITY / ROLE ACCESS
+Admin marketing: SecurityConfig.java line 32.
+Public promotions: SecurityConfig.java lines 27-29.
+Management buttons in templates use sec:authorize in marketing/list.html lines 1-4 and marketing/details.html lines 1-4.
+
+I. DATABASE / ENTITY RELATIONSHIPS
+Promotion -> Land: Promotion.java lines 57-59.
+Promotion -> createdBy User: lines 101-102.
+Promotion -> updatedBy User: lines 105-106.
+Important fields: type lines 48-50, status lines 52-54, discounts lines 63-67, active line 89, view count line 92.
+Transient promotional price: Promotion.java lines 121-139.
+
+J. IMPORTANT CONTROLLER ROUTES
+GET /marketing - admin list. MarketingController.java lines 36-41.
+GET /marketing/new - create form. Lines 44-52.
+POST /marketing - create. Lines 55-83.
+GET /marketing/{id} - details. Lines 86-96.
+GET /marketing/{id}/edit - edit. Lines 99-109.
+POST /marketing/{id}/update - update. Lines 112-142.
+POST /marketing/{id}/activate - activate eligible promotion. Lines 145-153.
+POST /marketing/{id}/cancel - cancel. Lines 156-159.
+POST /marketing/{id}/deactivate - deactivate. Lines 161-164.
+GET /promotions - public list. PublicPromotionController.java lines 18-22.
+GET /promotions/{id} - public offer details. Lines 24-36.
+GET / - homepage promotions. HomeController.java lines 17-21.
+
+K. UI TEMPLATES
+marketing/list.html lines 1-4: Admin campaign list and actions.
+marketing/form.html lines 1-343: Create/edit form, land preview, discount preview.
+marketing/details.html lines 1-4: Admin campaign details/actions and flash messages.
+promotions/list.html lines 1-4: Public active offers.
+promotions/details.html lines 1-4: Public active offer details.
+lands.html lines 149-177: Land cards with promotion badge/price.
+land-details.html lines 83-96: Land detail promotion price/discount.
+index.html lines 298-324: Homepage promotions section.
+
+L. TEST FILES
+MarketingAccessAndUiTest.java lines 1-85: role access, public route render, route visibility, template contracts.
+PromotionServiceTest.java lines 1-128: promotional price, validation, lifecycle, cancellation.
+
+==================================================
+MAJOR FUNCTION 6 - CUSTOMER RELATIONSHIP MANAGEMENT
+==================================================
+
+A. FUNCTION NAME
+Customer Relationship Management
+
+B. PURPOSE
+CRM combines customer profile management, reviews, feedback, and admin customer history. Customers manage their own
+profile, reviews, and feedback. Admin/staff users view customer history and moderate reviews/feedback.
+
+C. MAIN ACTORS / OWNERSHIP
+Data owner: Customer owns profile, reviews, feedback; admin/staff manages moderation and customer history.
+Create: CUSTOMER registration, review, feedback.
+Read: CUSTOMER reads own profile/reviews/feedback; ADMIN/STAFF reads customer history and admin moderation queues.
+Update: CUSTOMER updates profile and own editable review/feedback states; ADMIN/STAFF moderates reviews and feedback.
+Delete/deactivate: Reviews are hidden/soft-deleted; feedback is cancelled; customer account can be enabled/disabled by admin path.
+Roles: /customer/** CUSTOMER at SecurityConfig.java line 30. /admin/customers/**, /admin/reviews/**, /admin/feedback/** ADMIN or STAFF at lines 34-35.
+
+--------------------------------------------------
+6A. CUSTOMER PROFILE
+--------------------------------------------------
+D. IMPORTANT SOURCE FILES
+User.java lines 21-67: Customer/user entity.
+Role.java lines 1-9.
+RegisterForm.java lines 1-97.
+UserRepository.java lines 1-17.
+UserService.java lines 12-106.
+AuthController.java lines 13-46.
+CustomerProfileController.java lines 19-74.
+
+E. CRUD MAPPING
+CREATE: AuthController.java lines 26-43; UserService.validateRegistration lines 42-52; registerCustomer lines 54-64; template auth/register.html lines 1-92.
+READ: CustomerProfileController.details lines 39-49; template customer/profile/details.html lines 1-3.
+UPDATE: CustomerProfileController.update lines 57-71; UserService.updateCustomerProfile lines 78-88; template customer/profile/edit.html lines 1-3.
+DELETE-EQUIVALENT: Admin enable/disable uses AdminCustomerController lines 81-99 and UserService.setCustomerEnabled lines 90-98.
+
+F. VALIDATION RULES
+Registration validation: email uniqueness and password confirmation. UserService.java lines 42-52.
+Customer profile ownership: uses authentication email. CustomerProfileController.java lines 39-71.
+Protected role/password fields are not accepted in customer profile update. UserService.java lines 78-88.
+Admin customer enable/disable requires admin check. AdminCustomerController.java lines 91-107.
+
+--------------------------------------------------
+6B. REVIEWS
+--------------------------------------------------
+D. IMPORTANT SOURCE FILES
+Review.java lines 27-81.
+ReviewStatus.java lines 1-8.
+ReviewRepository.java lines 8-24.
+ReviewService.java lines 16-167.
+CustomerReviewController.java lines 15-121.
+AdminReviewController.java lines 13-73.
+
+E. CRUD MAPPING
+CREATE: CustomerReviewController.java lines 32-64; ReviewService.create lines 63-78; template customer/reviews/form.html lines 1-3. Result PENDING active review.
+READ: Customer list/details lines 26-30 and 68-78; public approved reviews through LandController.java lines 74-94 and ReviewService.findApprovedReviewsForLand lines 44-47; admin list/details lines 22-38.
+UPDATE: Customer update lines 81-107 and ReviewService.update lines 80-91; admin approve/reject/hide lines 41-70 and service lines 101-123.
+DELETE-EQUIVALENT: Customer hide/delete lines 111-118 and ReviewService.hideByCustomer lines 93-99. Admin hide lines 63-70 and service lines 116-123.
+
+F. VALIDATION RULES
+Review requires completed booking owned by customer.
+File: ReviewService.java. Lines 134-141.
+One active review per completed booking.
+File: ReviewService.java. Lines 63-78; ReviewRepository.java lines 12-16.
+Rating/title/comment required/bounded.
+File: Review.java lines 51-64 and ReviewService.applyReviewFields lines 148-155.
+Public only APPROVED + active reviews.
+File: ReviewService.java lines 44-47; ReviewRepository.java line 18.
+Customer can access own reviews only.
+File: ReviewService.java lines 29-37.
+
+G. WORKFLOW
+PENDING review created: ReviewService.create lines 63-78.
+PENDING -> APPROVED: ReviewService.approve lines 101-107.
+PENDING -> REJECTED: ReviewService.reject lines 109-114.
+Any active -> hidden inactive: ReviewService.hide lines 116-123; hideByCustomer lines 93-99.
+
+--------------------------------------------------
+6C. FEEDBACK
+--------------------------------------------------
+D. IMPORTANT SOURCE FILES
+Feedback.java lines 23-72.
+FeedbackStatus.java lines 1-9.
+FeedbackType.java lines 1-12.
+FeedbackRepository.java lines 8-20.
+FeedbackService.java lines 14-131.
+CustomerFeedbackController.java lines 14-79.
+AdminFeedbackController.java lines 16-85.
+
+E. CRUD MAPPING
+CREATE: CustomerFeedbackController.java lines 35-53; FeedbackService.create lines 44-55; customer/feedback/form.html lines 1-3. Result OPEN.
+READ: Customer list/details lines 23-27 and 56-66; admin list/details lines 27-43; service ownership lines 25-33.
+UPDATE: Admin review lines 46-54 and service markInReview lines 68-75; respond lines 57-68 and service lines 77-87; resolve lines 71-79 and service lines 89-97.
+DELETE-EQUIVALENT: Customer cancel lines 69-76 and FeedbackService.cancel lines 57-66. Status CANCELLED.
+
+F. VALIDATION RULES
+Feedback type, subject, message required.
+File: FeedbackService.java lines 44-55, 118-129.
+Customer ownership for read/cancel.
+File: FeedbackService.java lines 25-33 and 57-66.
+Cancel only from OPEN.
+File: FeedbackService.java lines 57-66.
+Admin response text required.
+File: FeedbackService.java lines 77-87 and 125-129.
+
+G. WORKFLOW
+OPEN -> IN_REVIEW: FeedbackService.markInReview lines 68-75.
+OPEN/IN_REVIEW -> RESPONDED: FeedbackService.respond lines 77-87.
+RESPONDED/IN_REVIEW/OPEN -> RESOLVED: FeedbackService.resolve lines 89-97.
+OPEN -> CANCELLED: FeedbackService.cancel lines 57-66.
+
+--------------------------------------------------
+6D. ADMIN CUSTOMER HISTORY
+--------------------------------------------------
+D. IMPORTANT SOURCE FILES
+AdminCustomerController.java lines 21-109.
+CustomerManagementService.java lines 27-97.
+CustomerCrmSummary.java lines 1-17.
+CustomerInteractionItem.java lines 1-12.
+admin/customers/list.html lines 1-3.
+admin/customers/details.html lines 1-163.
+
+E. CRUD / AGGREGATION MAPPING
+READ all customers: AdminCustomerController.list lines 51-55; CustomerManagementService.findCustomers lines 53-55.
+READ customer details/history: AdminCustomerController.details lines 58-78.
+Aggregates profile/inquiries/site visits/bookings/payments/reviews/feedback: CustomerManagementService.summary lines 57-70 and timeline lines 72-96.
+Enable/disable customer: AdminCustomerController lines 81-99; UserService.setCustomerEnabled lines 90-98.
+
+H. SECURITY / ROLE ACCESS
+SecurityConfig.java lines 34-35: /admin/customers/**, /admin/reviews/**, /admin/feedback/** require ADMIN or STAFF.
+AdminCustomerController.hasAdminRole lines 105-107 restricts enable/disable to ADMIN specifically.
+
+I. DATABASE / ENTITY RELATIONSHIPS
+User role/status: User.java lines 42-59.
+Review -> customer, land, booking: Review.java lines 36-48.
+Feedback -> customer/respondedBy: Feedback.java lines 32-34 and 67-68.
+Inquiry -> customer/land/respondedBy: Inquiry.java lines 33-40 and 65-66.
+SiteVisit -> customer/land/reviewer: SiteVisit.java lines 34-41 and 64-65.
+Booking -> customer/land/reviewer: Booking.java lines 34-41 and 68-69.
+Payment -> booking/customer/processedBy: Payment.java lines 34-41 and 94-95.
+
+J. IMPORTANT CONTROLLER ROUTES
+GET /register - registration form. AuthController.java lines 26-32.
+POST /register - register customer. AuthController.java lines 34-43.
+GET /customer/profile - own profile. CustomerProfileController.java lines 39-49.
+GET /customer/profile/edit - edit form. Lines 51-55.
+POST /customer/profile/update - update. Lines 57-71.
+GET /customer/reviews - list. CustomerReviewController.java lines 26-30.
+GET /customer/reviews/new/{bookingId} - create form. Lines 32-43.
+POST /customer/reviews - create. Lines 46-64.
+GET /customer/reviews/{id} - details. Lines 68-78.
+GET /customer/reviews/{id}/edit - edit. Lines 81-92.
+POST /customer/reviews/{id}/update - update. Lines 95-107.
+POST /customer/reviews/{id}/delete - hide. Lines 111-118.
+GET /admin/reviews - admin list. AdminReviewController.java lines 22-26.
+GET /admin/reviews/{id} - admin details. Lines 28-38.
+POST /admin/reviews/{id}/approve - approve. Lines 41-49.
+POST /admin/reviews/{id}/reject - reject. Lines 52-60.
+POST /admin/reviews/{id}/hide - hide. Lines 63-70.
+GET /customer/feedback - list. CustomerFeedbackController.java lines 23-27.
+GET /customer/feedback/new - form. Lines 29-33.
+POST /customer/feedback - create. Lines 35-53.
+GET /customer/feedback/{id} - details. Lines 56-66.
+POST /customer/feedback/{id}/cancel - cancel. Lines 69-76.
+GET /admin/feedback - admin list. AdminFeedbackController.java lines 27-31.
+GET /admin/feedback/{id} - details. Lines 33-43.
+POST /admin/feedback/{id}/review - mark in review. Lines 46-54.
+POST /admin/feedback/{id}/respond - respond. Lines 57-68.
+POST /admin/feedback/{id}/resolve - resolve. Lines 71-79.
+GET /admin/customers - customer list. AdminCustomerController.java lines 51-55.
+GET /admin/customers/{id} - customer history. Lines 58-78.
+POST /admin/customers/{id}/enable - enable. Lines 81-84.
+POST /admin/customers/{id}/disable - disable. Lines 86-89.
+
+K. UI TEMPLATES
+auth/register.html lines 1-92; auth/login.html lines 1-76.
+customer/profile/details.html lines 1-3; customer/profile/edit.html lines 1-3.
+customer/reviews/list.html lines 1-3; form.html lines 1-3; details.html lines 1-3.
+admin/reviews/list.html lines 1-3; details.html lines 1-3.
+customer/feedback/list.html lines 1-3; form.html lines 1-3; details.html lines 1-3.
+admin/feedback/list.html lines 1-3; details.html lines 1-3.
+admin/customers/list.html lines 1-3; admin/customers/details.html lines 1-163.
+
+L. TEST FILES
+No CRM-specific test class exists in the current codebase.
+
+==================================================
+GLOBAL SECURITY / ROLE MATRIX REFERENCES
+==================================================
+
+Security rules:
+Public: SecurityConfig.java lines 27-29.
+CUSTOMER: /customer/** at line 30.
+VERIFICATION: /verification/** ADMIN or VERIFICATION_OFFICER at line 31.
+MARKETING: /marketing and /marketing/** ADMIN or MARKETING_STAFF at line 32.
+PAYMENTS ADMIN: /admin/payments/** ADMIN or STAFF at line 33.
+CRM ADMIN: /admin/customers/**, /admin/reviews/**, /admin/feedback/** ADMIN or STAFF at lines 34-35.
+General /admin/**: ADMIN, STAFF, VERIFICATION_OFFICER, MARKETING_STAFF at lines 36-37.
+
+==================================================
+LANDHUB MAJOR FUNCTIONS QUICK SUMMARY
+==================================================
+
+1. Land Listing
+Owner: Admin/Staff.
+Create: Admin land form/controller.
+Read: Public active/reserved/sold; admin all.
+Update: Admin.
+Delete: Status-based INACTIVE.
+Main validation: entity required fields, public statuses, safe image upload validation.
+
+2. Verification
+Owner: Admin/Verification Officer.
+Create: Verification request plus documents.
+Read: Verification queue/details/documents.
+Update: start review, approve, reject, request info.
+Delete: Cancel request or remove/deactivate documents.
+Main validation: valid land, duplicate active request prevention, file type/size, active-state review.
+
+3. Inquiry / Site Visit / Booking
+Owner: Customer records with staff workflow.
+Create: Customer.
+Read: Customer own records, admin all.
+Update: Admin workflow actions; customer cancel.
+Delete: Status-based cancel.
+Main validation: ownership, future date, available land booking, duplicate active booking prevention, status transitions.
+
+4. Payment
+Owner: Customer payment records with admin processing.
+Create: Customer for own approved booking.
+Read: Customer own/admin all.
+Update: demo success/failure, admin paid/failed/cancel/refund.
+Delete: No physical delete; status-based financial preservation.
+Main validation: approved/reserved booking, amount <= remaining balance, method references, unique transaction ref, locking.
+
+5. Marketing
+Owner: Admin/Marketing Staff.
+Create: Campaign.
+Read: Admin/public active.
+Update: edit/activate/status.
+Delete: Cancel/deactivate.
+Main validation: verified eligible land, dates, one discount type, percentage/fixed discount limits, transient promotional price.
+
+6. CRM
+Owner: Customer profile/reviews/feedback; admin/staff moderation.
+Create: Registration, review, feedback.
+Read: Own/admin history/public approved reviews.
+Update: profile, review edit/moderation, feedback response/status.
+Delete: Review hide, feedback cancel, customer enable/disable.
+Main validation: ownership, completed booking review eligibility, duplicate review prevention, role protection.
+
+==================================================
+ROLE MATRIX
+==================================================
+
+CUSTOMER
+Land: READ public
+Verification: NONE
+Inquiry: CREATE / READ OWN / UPDATE OWN CANCEL
+Site Visit: CREATE / READ OWN / UPDATE OWN CANCEL
+Booking: CREATE / READ OWN / UPDATE OWN CANCEL
+Payment: CREATE / READ OWN / UPDATE OWN DEMO STATUS
+Marketing: READ public promotions
+CRM: CREATE / READ OWN / UPDATE OWN / CANCEL OR HIDE OWN
+
+ADMIN
+Land: MANAGE
+Verification: MANAGE
+Inquiry: MANAGE
+Site Visit: MANAGE
+Booking: MANAGE
+Payment: MANAGE
+Marketing: MANAGE
+CRM: MANAGE
+
+STAFF
+Land: MANAGE through /admin/**
+Verification: NONE unless /admin/** view only not /verification/**
+Inquiry: MANAGE through /admin/**
+Site Visit: MANAGE through /admin/**
+Booking: MANAGE through /admin/**
+Payment: MANAGE /admin/payments/**
+Marketing: NONE
+CRM: MANAGE admin customers/reviews/feedback
+
+VERIFICATION_OFFICER
+Land: ADMIN AREA READ/MANAGE via /admin/**; verification approval integrates with land status
+Verification: MANAGE
+Inquiry: NONE
+Site Visit: NONE
+Booking: NONE
+Payment: NONE
+Marketing: NONE
+CRM: NONE
+
+MARKETING_STAFF
+Land: ADMIN AREA READ via /admin/**, plus public read
+Verification: NONE
+Inquiry: NONE
+Site Visit: NONE
+Booking: NONE
+Payment: NONE
+Marketing: MANAGE
+CRM: NONE
+
+==================================================
+STATUS WORKFLOW SUMMARY
+==================================================
+
+Land:
+PENDING -> AVAILABLE -> RESERVED -> SOLD
+PENDING/AVAILABLE/RESERVED/SOLD -> INACTIVE by admin delete-equivalent.
+
+Verification:
+PENDING -> UNDER_REVIEW -> APPROVED
+PENDING/UNDER_REVIEW -> REJECTED
+PENDING/UNDER_REVIEW -> ADDITIONAL_INFO_REQUIRED
+Any active request -> CANCELLED
+
+Inquiry:
+OPEN -> RESPONDED -> RESOLVED
+OPEN -> CANCELLED
+
+Site Visit:
+PENDING -> APPROVED -> COMPLETED
+PENDING -> REJECTED
+PENDING/APPROVED -> RESCHEDULED
+PENDING/APPROVED -> CANCELLED
+
+Booking:
+PENDING -> APPROVED -> COMPLETED
+PENDING -> REJECTED
+PENDING/APPROVED -> CANCELLED
+
+Payment:
+PENDING -> PAID
+PENDING -> FAILED
+PENDING -> CANCELLED
+PAID -> REFUNDED
+
+Promotion:
+DRAFT -> SCHEDULED -> ACTIVE -> EXPIRED
+ACTIVE -> CANCELLED
+ACTIVE -> INACTIVE
+
+Review:
+PENDING -> APPROVED
+PENDING -> REJECTED
+APPROVED/PENDING -> HIDDEN or inactive hide
+
+Feedback:
+OPEN -> IN_REVIEW -> RESPONDED -> RESOLVED
+OPEN -> CANCELLED
+
+==================================================
+MISSING / UNIMPLEMENTED / STATUS-BASED DELETE NOTES
+==================================================
+
+1. Land delete is status-based INACTIVE, not physical delete. Admin route name uses /delete but service deactivates.
+2. Verification request cancel is status-based; document removal is handled by service, not full request hard delete.
+3. Inquiry, site visit, booking, feedback use cancel/status transitions instead of physical delete.
+4. Payment has no physical delete route; failed/cancelled/refunded preserve records and are excluded from effective totals.
+5. Promotion delete is cancel/deactivate only; historical records remain.
+6. Review delete is hide/inactive behavior, not physical delete.
+7. No dedicated test classes currently exist for Land, Verification, Inquiry, Site Visit, Booking, Feedback, Review, or CRM admin history.

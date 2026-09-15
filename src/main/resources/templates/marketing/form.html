@@ -1,4 +1,343 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>LandHub | Promotion Form</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"><link th:href="@{/css/style.css}" rel="stylesheet"></head>
-<body><a class="skip-link" href="#main-content">Skip to content</a><div th:replace="~{fragments/navbar :: navbar}"></div><main id="main-content" class="admin-shell"><section class="admin-header"><div class="container"><div class="admin-header-row reveal"><div><p class="section-kicker">Campaign editor</p><h1 th:text="${promotion.id == null ? 'New Promotion' : 'Edit Promotion'}">New Promotion</h1><p>Set a clear offer for a verified public property.</p></div><a class="btn btn-outline-light" th:href="@{/marketing}">Back</a></div></div></section><section class="admin-content section-padding"><div class="container"><div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div><form class="admin-form-card reveal" th:object="${promotion}" th:action="${promotion.id == null ? '/marketing' : '/marketing/' + promotion.id + '/update'}" method="post"><div class="admin-form-grid"><div class="form-field span-2"><label for="title">Campaign Title</label><input id="title" name="title" maxlength="180" required th:value="${promotion.title}"></div><div class="form-field"><label for="landId">Land Listing</label><select id="landId" name="landId" required><option value="">Select verified land</option><option th:each="land : ${lands}" th:value="${land.id}" th:selected="${promotion.land != null && promotion.land.id == land.id}" th:text="${land.title + ' - ' + land.location + ' (' + land.status + ')'}">Property</option></select></div><div class="form-field"><label for="promotionType">Promotion Type</label><select id="promotionType" name="promotionType" required><option th:each="type : ${promotionTypes}" th:value="${type}" th:selected="${promotion.promotionType == type}" th:text="${#strings.replace(type.name(), '_', ' ')}">SPECIAL OFFER</option></select></div><div class="form-field"><label for="status">Campaign Status</label><select id="status" name="status"><option th:each="status : ${promotionStatuses}" th:value="${status}" th:selected="${promotion.status == status}" th:text="${status}">DRAFT</option></select></div><div class="form-field"><label for="startDate">Start Date</label><input id="startDate" name="startDate" type="date" required th:value="${promotion.startDate}"></div><div class="form-field"><label for="endDate">End Date</label><input id="endDate" name="endDate" type="date" required th:value="${promotion.endDate}"></div><div class="form-field"><label for="discountPercentage">Discount Percentage</label><input id="discountPercentage" name="discountPercentage" type="number" min="0.01" max="100" step="0.01" th:value="${promotion.discountPercentage}"></div><div class="form-field"><label for="discountAmount">Fixed Discount Amount</label><input id="discountAmount" name="discountAmount" type="number" min="0.01" step="0.01" th:value="${promotion.discountAmount}"></div><div class="form-field span-2"><label for="promotionalText">Promotional Text</label><textarea id="promotionalText" name="promotionalText" rows="3" maxlength="500" th:text="${promotion.promotionalText}"></textarea></div><div class="form-field span-2"><label for="description">Description</label><textarea id="description" name="description" rows="5" maxlength="2000" th:text="${promotion.description}"></textarea></div><div class="form-field span-2"><label for="bannerImageUrl">Banner Image URL <span class="text-muted">(optional)</span></label><input id="bannerImageUrl" name="bannerImageUrl" maxlength="500" th:value="${promotion.bannerImageUrl}"></div><div class="form-field span-2"><label class="verified-check"><input name="featured" type="checkbox" value="true" th:checked="${promotion.featured}"><span>Feature this campaign for its linked land</span></label></div></div><p class="text-muted mt-3">Use either a percentage discount or a fixed amount. The original land price is never changed.</p><div class="form-actions"><button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> Save Promotion</button><a class="btn btn-outline-dark" th:href="@{/marketing}">Cancel</a></div></form></div></section></main><div th:replace="~{fragments/footer :: footer}"></div><script th:src="@{/js/main.js}"></script></body></html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LandHub | Promotion Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<main id="main-content" class="admin-shell">
+    <section class="admin-header">
+        <div class="container">
+            <div class="admin-header-row reveal">
+                <div>
+                    <p class="section-kicker">Campaign editor</p>
+                    <h1 th:text="${promotion.id == null ? 'New Promotion' : 'Edit Promotion'}">New Promotion</h1>
+                    <p>Choose the land once, then set the promotion offer.</p>
+                </div>
+                <a class="btn btn-outline-light" th:href="@{/marketing}">Back</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="admin-content section-padding">
+        <div class="container">
+            <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+            <form class="admin-form-card reveal" id="promotionForm" th:object="${promotion}"
+                  th:action="${promotion.id == null ? '/marketing' : '/marketing/' + promotion.id + '/update'}"
+                  method="post">
+                <div class="admin-form-grid">
+                    <div class="form-field span-2">
+                        <label for="title">Campaign Title</label>
+                        <input id="title" name="title" maxlength="180" required th:value="${promotion.title}">
+                    </div>
+
+                    <div class="form-field span-2">
+                        <label for="landId">Land Listing</label>
+                        <select id="landId" name="landId" required>
+                            <option value="">Select verified land</option>
+                            <option th:each="land : ${lands}"
+                                    th:value="${land.id}"
+                                    th:selected="${promotion.land != null && promotion.land.id == land.id}"
+                                    th:attr="data-title=${land.title},data-location=${land.location},data-price=${land.price},data-status=${land.status},data-public-eligible=${land.status.name() == 'AVAILABLE' || land.status.name() == 'RESERVED'}"
+                                    th:text="${land.title + ' - ' + land.location + ' (LKR ' + land.price + ', ' + land.status + ')'}">
+                                Property
+                            </option>
+                        </select>
+                        <span class="text-muted">ACTIVE promotions are allowed only for AVAILABLE or RESERVED verified land.</span>
+                    </div>
+
+                    <div class="span-2 admin-card p-3">
+                        <div class="admin-card-heading mb-3">
+                            <h2 class="h5 mb-0">Selected Land</h2>
+                            <span id="landEligibilityBadge" class="status">Select land</span>
+                        </div>
+                        <dl class="details-grid mb-0">
+                            <div>
+                                <dt>Land Title</dt>
+                                <dd id="landPreviewTitle">Select a land listing</dd>
+                            </div>
+                            <div>
+                                <dt>Location</dt>
+                                <dd id="landPreviewLocation">-</dd>
+                            </div>
+                            <div>
+                                <dt>Original Price</dt>
+                                <dd id="landPreviewPrice">-</dd>
+                            </div>
+                            <div>
+                                <dt>Current Status</dt>
+                                <dd id="landPreviewStatus">-</dd>
+                            </div>
+                        </dl>
+                        <p class="text-muted mt-3 mb-0" id="landEligibilityNote"></p>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="promotionType">Promotion Type</label>
+                        <select id="promotionType" name="promotionType" required>
+                            <option th:each="type : ${promotionTypes}"
+                                    th:value="${type}"
+                                    th:selected="${promotion.promotionType == type}"
+                                    th:text="${#strings.replace(type.name(), '_', ' ')}">SPECIAL OFFER</option>
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="status">Campaign Status</label>
+                        <select id="status" name="status">
+                            <option th:each="status : ${promotionStatuses}"
+                                    th:value="${status}"
+                                    th:selected="${promotion.status == status}"
+                                    th:text="${status}">DRAFT</option>
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="startDate">Start Date</label>
+                        <input id="startDate" name="startDate" type="date" required th:value="${promotion.startDate}">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="endDate">End Date</label>
+                        <input id="endDate" name="endDate" type="date" required th:value="${promotion.endDate}">
+                    </div>
+
+                    <div class="form-field span-2">
+                        <label>Discount Method</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            <label class="verified-check">
+                                <input type="radio" name="discountMethod" value="none"
+                                       th:checked="${promotion.discountPercentage == null && promotion.discountAmount == null}">
+                                <span>No discount</span>
+                            </label>
+                            <label class="verified-check">
+                                <input type="radio" name="discountMethod" value="percentage"
+                                       th:checked="${promotion.discountPercentage != null}">
+                                <span>Percentage discount</span>
+                            </label>
+                            <label class="verified-check">
+                                <input type="radio" name="discountMethod" value="fixed"
+                                       th:checked="${promotion.discountAmount != null}">
+                                <span>Fixed discount amount</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="discountPercentage">Discount Percentage</label>
+                        <input id="discountPercentage" name="discountPercentage" type="number"
+                               min="0.01" max="100" step="0.01" th:value="${promotion.discountPercentage}">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="discountAmount">Fixed Discount Amount</label>
+                        <input id="discountAmount" name="discountAmount" type="number"
+                               min="0.01" step="0.01" th:value="${promotion.discountAmount}">
+                    </div>
+
+                    <div class="span-2 admin-card p-3">
+                        <div class="admin-card-heading mb-3">
+                            <h2 class="h5 mb-0">Promotion Preview</h2>
+                        </div>
+                        <dl class="details-grid mb-0">
+                            <div>
+                                <dt>Original Price</dt>
+                                <dd id="previewOriginalPrice">-</dd>
+                            </div>
+                            <div>
+                                <dt>Discount</dt>
+                                <dd id="previewDiscount">-</dd>
+                            </div>
+                            <div>
+                                <dt>Promotional Price</dt>
+                                <dd id="previewPromotionalPrice">-</dd>
+                            </div>
+                        </dl>
+                        <p class="text-muted mt-3 mb-0" id="discountValidationMessage">
+                            The original land price is never changed.
+                        </p>
+                    </div>
+
+                    <div class="form-field span-2">
+                        <label for="promotionalText">Promotional Text</label>
+                        <textarea id="promotionalText" name="promotionalText" rows="3" maxlength="500"
+                                  th:text="${promotion.promotionalText}"></textarea>
+                    </div>
+
+                    <div class="form-field span-2">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" rows="5" maxlength="2000"
+                                  th:text="${promotion.description}"></textarea>
+                    </div>
+
+                    <div class="form-field span-2">
+                        <label for="bannerImageUrl">Banner Image URL <span class="text-muted">(optional)</span></label>
+                        <input id="bannerImageUrl" name="bannerImageUrl" maxlength="500"
+                               th:value="${promotion.bannerImageUrl}">
+                    </div>
+
+                    <div class="form-field span-2">
+                        <label class="verified-check">
+                            <input name="featured" type="checkbox" value="true" th:checked="${promotion.featured}">
+                            <span>Feature this campaign for its linked land</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> Save Promotion</button>
+                    <a class="btn btn-outline-dark" th:href="@{/marketing}">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script th:src="@{/js/main.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const landSelect = document.getElementById('landId');
+        const statusSelect = document.getElementById('status');
+        const percentageInput = document.getElementById('discountPercentage');
+        const amountInput = document.getElementById('discountAmount');
+        const methodInputs = Array.from(document.querySelectorAll('input[name="discountMethod"]'));
+
+        const currency = new Intl.NumberFormat('en-LK', {
+            style: 'currency',
+            currency: 'LKR',
+            minimumFractionDigits: 2
+        });
+
+        function selectedMethod() {
+            const checked = methodInputs.find(input => input.checked);
+            return checked ? checked.value : 'none';
+        }
+
+        function selectedLand() {
+            const option = landSelect.options[landSelect.selectedIndex];
+            if (!option || !option.value) {
+                return null;
+            }
+            return {
+                title: option.dataset.title || '-',
+                location: option.dataset.location || '-',
+                price: Number(option.dataset.price || 0),
+                status: option.dataset.status || '-',
+                publicEligible: option.dataset.publicEligible === 'true'
+            };
+        }
+
+        function setText(id, value) {
+            document.getElementById(id).textContent = value;
+        }
+
+        function formatMoney(value) {
+            return Number.isFinite(value) ? currency.format(value) : '-';
+        }
+
+        function syncDiscountInputs() {
+            const method = selectedMethod();
+            percentageInput.disabled = method !== 'percentage';
+            amountInput.disabled = method !== 'fixed';
+            percentageInput.required = method === 'percentage';
+            amountInput.required = method === 'fixed';
+            if (method !== 'percentage') {
+                percentageInput.value = '';
+                percentageInput.setCustomValidity('');
+            }
+            if (method !== 'fixed') {
+                amountInput.value = '';
+                amountInput.setCustomValidity('');
+            }
+        }
+
+        function updatePreview() {
+            const land = selectedLand();
+            const method = selectedMethod();
+            const status = statusSelect.value;
+
+            setText('landPreviewTitle', land ? land.title : 'Select a land listing');
+            setText('landPreviewLocation', land ? land.location : '-');
+            setText('landPreviewPrice', land ? formatMoney(land.price) : '-');
+            setText('landPreviewStatus', land ? land.status : '-');
+
+            const badge = document.getElementById('landEligibilityBadge');
+            const eligibilityNote = document.getElementById('landEligibilityNote');
+            if (!land) {
+                badge.textContent = 'Select land';
+                eligibilityNote.textContent = '';
+            } else if (land.publicEligible) {
+                badge.textContent = 'Eligible';
+                eligibilityNote.textContent = 'This land status can be used for an active public promotion if verification is approved.';
+            } else {
+                badge.textContent = 'Historical or draft only';
+                eligibilityNote.textContent = 'This status cannot be used for an ACTIVE public promotion.';
+            }
+
+            setText('previewOriginalPrice', land ? formatMoney(land.price) : '-');
+
+            let discountLabel = 'No discount';
+            let promotionalPrice = land ? land.price : NaN;
+            let validationMessage = 'The original land price is never changed.';
+
+            percentageInput.setCustomValidity('');
+            amountInput.setCustomValidity('');
+
+            if (method === 'percentage') {
+                const percentage = Number(percentageInput.value);
+                if (Number.isFinite(percentage) && percentage > 0 && percentage <= 100 && land) {
+                    const discount = land.price * (percentage / 100);
+                    promotionalPrice = land.price - discount;
+                    discountLabel = percentage + '%';
+                } else if (percentageInput.value) {
+                    validationMessage = 'Percentage discount must be greater than 0 and no more than 100.';
+                    percentageInput.setCustomValidity(validationMessage);
+                } else {
+                    discountLabel = '-';
+                }
+            }
+
+            if (method === 'fixed') {
+                const amount = Number(amountInput.value);
+                if (Number.isFinite(amount) && land && amount > 0 && amount < land.price) {
+                    promotionalPrice = land.price - amount;
+                    discountLabel = formatMoney(amount);
+                } else if (amountInput.value) {
+                    validationMessage = 'Fixed discount must be greater than 0 and less than the original land price.';
+                    amountInput.setCustomValidity(validationMessage);
+                } else {
+                    discountLabel = '-';
+                }
+            }
+
+            if (land && status === 'ACTIVE' && !land.publicEligible) {
+                validationMessage = 'ACTIVE promotions require AVAILABLE or RESERVED land. Server validation also checks approved verification.';
+            }
+
+            setText('previewDiscount', discountLabel);
+            setText('previewPromotionalPrice', land ? formatMoney(Math.max(promotionalPrice, 0)) : '-');
+            setText('discountValidationMessage', validationMessage);
+        }
+
+        landSelect.addEventListener('change', updatePreview);
+        statusSelect.addEventListener('change', updatePreview);
+        percentageInput.addEventListener('input', updatePreview);
+        amountInput.addEventListener('input', updatePreview);
+        methodInputs.forEach(input => input.addEventListener('change', function () {
+            syncDiscountInputs();
+            updatePreview();
+        }));
+
+        syncDiscountInputs();
+        updatePreview();
+    });
+</script>
+</body>
+</html>

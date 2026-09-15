@@ -6,6 +6,8 @@ import com.landhub.booking.Booking;
 import com.landhub.booking.BookingService;
 import com.landhub.booking.BookingStatus;
 import com.landhub.land.LandStatus;
+import com.landhub.payment.strategy.PaymentStrategy;
+import com.landhub.payment.strategy.PaymentStrategyFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,13 +26,16 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final BookingService bookingService;
     private final UserService userService;
+    private final PaymentStrategyFactory paymentStrategyFactory;
 
     public PaymentService(PaymentRepository paymentRepository,
                           BookingService bookingService,
-                          UserService userService) {
+                          UserService userService,
+                          PaymentStrategyFactory paymentStrategyFactory) {
         this.paymentRepository = paymentRepository;
         this.bookingService = bookingService;
         this.userService = userService;
+        this.paymentStrategyFactory = paymentStrategyFactory;
     }
 
     @Transactional(readOnly = true)
@@ -82,22 +87,24 @@ public class PaymentService {
         Booking booking = bookingService.findCustomerBookingForPayment(bookingId, customerEmail)
                 .orElseThrow(() -> new IllegalArgumentException("Booking was not found."));
         validateNewPayment(booking, amount);
-        validateMethodDetails(paymentMethod, bankReference, chequeNumber);
 
         User customer = userService.findByEmail(customerEmail)
                 .orElseThrow(() -> new IllegalArgumentException("Customer account was not found."));
+        PaymentMethod resolvedMethod = requiredPaymentMethod(paymentMethod);
 
         Payment payment = new Payment();
         payment.setBooking(booking);
         payment.setCustomer(customer);
         payment.setPaymentType(requiredPaymentType(paymentType));
-        payment.setPaymentMethod(requiredPaymentMethod(paymentMethod));
-        payment.setStatus(PaymentStatus.PENDING);
+        payment.setPaymentMethod(resolvedMethod);
         payment.setAmount(amount);
         payment.setBankReference(cleanOptional(bankReference));
         payment.setChequeNumber(cleanOptional(chequeNumber));
         payment.setNote(cleanOptional(note));
         payment.setTransactionReference(generateTransactionReference());
+        PaymentStrategy strategy = paymentStrategyFactory.getStrategy(resolvedMethod);
+        strategy.validate(payment);
+        strategy.initialize(payment);
         return paymentRepository.save(payment);
     }
 
@@ -240,16 +247,6 @@ public class PaymentService {
         }
         if (booking.getAgreedPrice() == null || booking.getAgreedPrice().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Booking agreed price is required before payment.");
-        }
-    }
-
-    private void validateMethodDetails(PaymentMethod paymentMethod, String bankReference, String chequeNumber) {
-        PaymentMethod method = requiredPaymentMethod(paymentMethod);
-        if (method == PaymentMethod.BANK_TRANSFER && !hasText(bankReference)) {
-            throw new IllegalArgumentException("Bank transfer reference is required.");
-        }
-        if (method == PaymentMethod.CHEQUE && !hasText(chequeNumber)) {
-            throw new IllegalArgumentException("Cheque number is required.");
         }
     }
 
