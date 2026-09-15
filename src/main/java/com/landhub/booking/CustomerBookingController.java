@@ -2,6 +2,7 @@ package com.landhub.booking;
 
 import com.landhub.land.LandService;
 import com.landhub.payment.PaymentService;
+import com.landhub.review.ReviewService;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,11 +20,13 @@ public class CustomerBookingController {
     private final BookingService bookingService;
     private final LandService landService;
     private final PaymentService paymentService;
+    private final ReviewService reviewService;
 
-    public CustomerBookingController(BookingService bookingService, LandService landService, PaymentService paymentService) {
+    public CustomerBookingController(BookingService bookingService, LandService landService, PaymentService paymentService, ReviewService reviewService) {
         this.bookingService = bookingService;
         this.landService = landService;
         this.paymentService = paymentService;
+        this.reviewService = reviewService;
     }
 
     @GetMapping
@@ -72,6 +75,7 @@ public class CustomerBookingController {
                 .map(booking -> {
                     model.addAttribute("booking", booking);
                     model.addAttribute("paymentSummary", paymentService.getSummary(booking));
+                    model.addAttribute("bookingReview", reviewService.findCustomerReviewForBooking(booking.getId(), authentication.getName()).orElse(null));
                     return "customer/bookings/details";
                 })
                 .orElseGet(() -> {
