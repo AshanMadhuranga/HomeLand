@@ -6,12 +6,9 @@ import com.landhub.booking.BookingService;
 import com.landhub.booking.BookingStatus;
 import com.landhub.feedback.FeedbackService;
 import com.landhub.inquiry.InquiryService;
-import com.landhub.payment.PaymentService;
-<<<<<<< HEAD
-import com.landhub.review.ReviewService;
-=======
 import com.landhub.marketing.PromotionService;
->>>>>>> feature/marketing-promotion
+import com.landhub.payment.PaymentService;
+import com.landhub.review.ReviewService;
 import com.landhub.sitevisit.SiteVisitService;
 import com.landhub.verification.VerificationService;
 import com.landhub.verification.VerificationStatus;
@@ -29,13 +26,10 @@ public class DashboardController {
     private final SiteVisitService siteVisitService;
     private final BookingService bookingService;
     private final PaymentService paymentService;
-<<<<<<< HEAD
     private final ReviewService reviewService;
     private final FeedbackService feedbackService;
     private final UserService userService;
-=======
     private final PromotionService promotionService;
->>>>>>> feature/marketing-promotion
 
     public DashboardController(LandService landService,
                                VerificationService verificationService,
@@ -43,26 +37,20 @@ public class DashboardController {
                                SiteVisitService siteVisitService,
                                BookingService bookingService,
                                PaymentService paymentService,
-<<<<<<< HEAD
                                ReviewService reviewService,
                                FeedbackService feedbackService,
-                               UserService userService) {
-=======
+                               UserService userService,
                                PromotionService promotionService) {
->>>>>>> feature/marketing-promotion
         this.landService = landService;
         this.verificationService = verificationService;
         this.inquiryService = inquiryService;
         this.siteVisitService = siteVisitService;
         this.bookingService = bookingService;
         this.paymentService = paymentService;
-<<<<<<< HEAD
         this.reviewService = reviewService;
         this.feedbackService = feedbackService;
         this.userService = userService;
-=======
         this.promotionService = promotionService;
->>>>>>> feature/marketing-promotion
     }
 
     @GetMapping("/customer/dashboard")
@@ -91,14 +79,11 @@ public class DashboardController {
         model.addAttribute("pendingBookingCount", bookingService.countPending());
         model.addAttribute("pendingPaymentCount", paymentService.countPending());
         model.addAttribute("paidRevenue", paymentService.paidRevenue());
-<<<<<<< HEAD
         model.addAttribute("totalCustomerCount", userService.countCustomers());
         model.addAttribute("pendingReviewCount", reviewService.countPending());
         model.addAttribute("openFeedbackCount", feedbackService.countOpen());
-=======
         model.addAttribute("activePromotionCount", promotionService.countActive());
         model.addAttribute("scheduledPromotionCount", promotionService.countScheduled());
->>>>>>> feature/marketing-promotion
         return "admin/dashboard";
     }
 

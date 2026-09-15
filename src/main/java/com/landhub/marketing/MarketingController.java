@@ -1,10 +1,5 @@
 package com.landhub.marketing;
 
-<<<<<<< HEAD
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-=======
 import com.landhub.auth.User;
 import com.landhub.auth.UserService;
 import com.landhub.land.LandService;
@@ -21,18 +16,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
->>>>>>> feature/marketing-promotion
 
 @Controller
 @RequestMapping("/marketing")
 public class MarketingController {
 
-<<<<<<< HEAD
-    @GetMapping
-    public String list() {
-        return "marketing/list";
-    }
-=======
     private final PromotionService promotionService;
     private final LandService landService;
     private final UserService userService;
@@ -215,5 +203,4 @@ public class MarketingController {
     private interface StatusChange {
         void apply();
     }
->>>>>>> feature/marketing-promotion
 }

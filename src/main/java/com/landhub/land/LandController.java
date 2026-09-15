@@ -1,10 +1,7 @@
 package com.landhub.land;
 
-<<<<<<< HEAD
-import com.landhub.review.ReviewService;
-=======
 import com.landhub.marketing.PromotionService;
->>>>>>> feature/marketing-promotion
+import com.landhub.review.ReviewService;
 import com.landhub.verification.VerificationService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,21 +18,17 @@ public class LandController {
 
     private final LandService landService;
     private final VerificationService verificationService;
-<<<<<<< HEAD
     private final ReviewService reviewService;
+    private final PromotionService promotionService;
 
-    public LandController(LandService landService, VerificationService verificationService, ReviewService reviewService) {
+    public LandController(LandService landService,
+                          VerificationService verificationService,
+                          ReviewService reviewService,
+                          PromotionService promotionService) {
         this.landService = landService;
         this.verificationService = verificationService;
         this.reviewService = reviewService;
-=======
-    private final PromotionService promotionService;
-
-    public LandController(LandService landService, VerificationService verificationService, PromotionService promotionService) {
-        this.landService = landService;
-        this.verificationService = verificationService;
         this.promotionService = promotionService;
->>>>>>> feature/marketing-promotion
     }
 
     @GetMapping("/lands")
@@ -92,13 +85,10 @@ public class LandController {
                     model.addAttribute("verified", verificationService.hasApprovedVerification(land.getId()));
                     model.addAttribute("relatedLands", relatedLands);
                     model.addAttribute("verifiedLandIds", verificationService.findApprovedLandIds(relatedLands));
-<<<<<<< HEAD
                     model.addAttribute("reviews", reviewService.findApprovedReviewsForLand(land.getId()));
                     model.addAttribute("reviewCount", reviewService.findApprovedReviewsForLand(land.getId()).size());
                     model.addAttribute("averageRating", reviewService.averageRatingForLand(land.getId()));
-=======
                     model.addAttribute("promotionsByLand", promotionService.publicPromotionsByLand(relatedLands));
->>>>>>> feature/marketing-promotion
                     return "land-details";
                 })
                 .orElseGet(() -> {
