@@ -65,13 +65,14 @@
                             <div class="detail-badges">
                                 <span class="status" th:classappend="${land.status.name().toLowerCase()}" th:text="${land.status}">AVAILABLE</span>
                                 <span class="detail-verified" th:if="${verified}"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
+                                <span class="detail-verified" th:if="${promotion != null}"><i class="bi bi-megaphone" aria-hidden="true"></i> Promotion</span>
                             </div>
                         </div>
 
                         <div class="detail-facts" aria-label="Property summary">
                             <div>
                                 <span>Price</span>
-                                <strong>LKR <span th:text="${land.price}">7.8M</span></strong>
+                                <strong><span th:if="${promotion != null}" class="text-muted text-decoration-line-through">LKR <span th:text="${land.price}">7.8M</span></span> <span th:if="${promotion != null}">LKR <span th:text="${promotion.promotionalPrice}">7.2M</span></span><span th:if="${promotion == null}">LKR <span th:text="${land.price}">7.8M</span></span></strong>
                             </div>
                             <div>
                                 <span>Land Size</span>
@@ -81,6 +82,12 @@
                                 <span>Land Type</span>
                                 <strong th:text="${land.landType}">RESIDENTIAL</strong>
                             </div>
+                        </div>
+
+                        <div class="verification-note" th:if="${promotion != null}">
+                            <h3 th:text="${promotion.title}">Special offer</h3>
+                            <p th:text="${promotion.promotionalText != null ? promotion.promotionalText : promotion.description}">Promotional offer details.</p>
+                            <p class="small mb-0"><strong>Offer valid until:</strong> <span th:text="${promotion.endDate}">2026-12-31</span></p>
                         </div>
 
                         <h2>Description</h2>
@@ -211,11 +218,12 @@
             </div>
 
             <div class="row g-4">
-                <div class="col-md-4 reveal" th:each="relatedLand : ${relatedLands}">
-                    <article class="property-card">
+                        <div class="col-md-4 reveal" th:each="relatedLand : ${relatedLands}">
+                    <article class="property-card" th:with="relatedPromotion=${promotionsByLand[relatedLand.id]}">
                         <div class="property-image">
                             <img th:src="${relatedLand.coverImageUrl}" th:alt="${relatedLand.title}">
                             <span class="badge badge-verified" th:if="${verifiedLandIds.contains(relatedLand.id)}"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
+                            <span class="badge badge-promotion" th:if="${relatedPromotion != null}"><i class="bi bi-megaphone" aria-hidden="true"></i> Offer</span>
                         </div>
                         <div class="property-body">
                             <div class="property-meta">

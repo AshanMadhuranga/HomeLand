@@ -120,6 +120,14 @@ a {
     box-shadow: 0 14px 30px rgba(15, 122, 84, 0.25);
 }
 
+.badge-promotion {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    color: var(--color-ink);
+    background: var(--color-gold);
+}
+
 .btn-primary:hover,
 .btn-primary:focus {
     border-color: var(--color-emerald-dark);
