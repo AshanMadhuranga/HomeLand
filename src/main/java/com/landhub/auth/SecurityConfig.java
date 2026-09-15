@@ -29,7 +29,7 @@ public class SecurityConfig {
                                 "/images/**", "/uploads/lands/**").permitAll()
                         .requestMatchers("/customer/**").hasRole(Role.CUSTOMER.name())
                         .requestMatchers("/verification/**").hasAnyRole(Role.ADMIN.name(), Role.VERIFICATION_OFFICER.name())
-                        .requestMatchers("/marketing/**").hasAnyRole(Role.ADMIN.name(), Role.MARKETING_STAFF.name())
+                        .requestMatchers("/marketing", "/marketing/**").hasAnyRole(Role.ADMIN.name(), Role.MARKETING_STAFF.name())
                         .requestMatchers("/admin/payments/**").hasAnyRole(Role.ADMIN.name(), Role.STAFF.name())
                         .requestMatchers("/admin/customers/**", "/admin/reviews/**", "/admin/feedback/**")
                         .hasAnyRole(Role.ADMIN.name(), Role.STAFF.name())
