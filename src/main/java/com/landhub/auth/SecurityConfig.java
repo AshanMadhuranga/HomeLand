@@ -31,6 +31,8 @@ public class SecurityConfig {
                         .requestMatchers("/verification/**").hasAnyRole(Role.ADMIN.name(), Role.VERIFICATION_OFFICER.name())
                         .requestMatchers("/marketing/**").hasAnyRole(Role.ADMIN.name(), Role.MARKETING_STAFF.name())
                         .requestMatchers("/admin/payments/**").hasAnyRole(Role.ADMIN.name(), Role.STAFF.name())
+                        .requestMatchers("/admin/customers/**", "/admin/reviews/**", "/admin/feedback/**")
+                        .hasAnyRole(Role.ADMIN.name(), Role.STAFF.name())
                         .requestMatchers("/admin/**").hasAnyRole(Role.ADMIN.name(), Role.STAFF.name(),
                                 Role.VERIFICATION_OFFICER.name(), Role.MARKETING_STAFF.name())
                         .anyRequest().authenticated()

@@ -28,8 +28,9 @@
             <a th:href="@{/admin/site-visits}"><i class="bi bi-calendar2-check" aria-hidden="true"></i> Site Visit Management</a>
             <a th:href="@{/admin/payments}"><i class="bi bi-credit-card" aria-hidden="true"></i> Payment Management</a>
             <a href="#"><i class="bi bi-megaphone" aria-hidden="true"></i> Marketing & Promotions</a>
-            <a href="#"><i class="bi bi-people" aria-hidden="true"></i> Customer Management</a>
-            <a href="#"><i class="bi bi-star" aria-hidden="true"></i> Reviews & Feedback</a>
+            <a th:href="@{/admin/customers}"><i class="bi bi-people" aria-hidden="true"></i> Customer Management</a>
+            <a th:href="@{/admin/reviews}"><i class="bi bi-star" aria-hidden="true"></i> Reviews</a>
+            <a th:href="@{/admin/feedback}"><i class="bi bi-envelope-heart" aria-hidden="true"></i> Feedback</a>
         </nav>
         <form th:action="@{/logout}" method="post">
             <button class="btn btn-outline-light w-100" type="submit">
@@ -58,6 +59,9 @@
             <article class="dashboard-stat"><i class="bi bi-calendar2-check" aria-hidden="true"></i><span>Pending Site Visits</span><strong th:text="${pendingSiteVisitCount}">--</strong></article>
             <article class="dashboard-stat"><i class="bi bi-credit-card" aria-hidden="true"></i><span>Pending Payments</span><strong th:text="${pendingPaymentCount}">--</strong></article>
             <article class="dashboard-stat"><i class="bi bi-cash-coin" aria-hidden="true"></i><span>Paid Revenue</span><strong>LKR <span th:text="${paidRevenue}">0</span></strong></article>
+            <article class="dashboard-stat"><i class="bi bi-people" aria-hidden="true"></i><span>Total Customers</span><strong th:text="${totalCustomerCount}">--</strong></article>
+            <article class="dashboard-stat"><i class="bi bi-star" aria-hidden="true"></i><span>Pending Reviews</span><strong th:text="${pendingReviewCount}">--</strong></article>
+            <article class="dashboard-stat"><i class="bi bi-envelope-heart" aria-hidden="true"></i><span>Open Feedback</span><strong th:text="${openFeedbackCount}">--</strong></article>
         </div>
 
         <section class="dashboard-panel reveal">

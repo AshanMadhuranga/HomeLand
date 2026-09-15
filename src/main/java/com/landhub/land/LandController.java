@@ -1,5 +1,6 @@
 package com.landhub.land;
 
+import com.landhub.review.ReviewService;
 import com.landhub.verification.VerificationService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,10 +17,12 @@ public class LandController {
 
     private final LandService landService;
     private final VerificationService verificationService;
+    private final ReviewService reviewService;
 
-    public LandController(LandService landService, VerificationService verificationService) {
+    public LandController(LandService landService, VerificationService verificationService, ReviewService reviewService) {
         this.landService = landService;
         this.verificationService = verificationService;
+        this.reviewService = reviewService;
     }
 
     @GetMapping("/lands")
@@ -74,6 +77,9 @@ public class LandController {
                     model.addAttribute("verified", verificationService.hasApprovedVerification(land.getId()));
                     model.addAttribute("relatedLands", relatedLands);
                     model.addAttribute("verifiedLandIds", verificationService.findApprovedLandIds(relatedLands));
+                    model.addAttribute("reviews", reviewService.findApprovedReviewsForLand(land.getId()));
+                    model.addAttribute("reviewCount", reviewService.findApprovedReviewsForLand(land.getId()).size());
+                    model.addAttribute("averageRating", reviewService.averageRatingForLand(land.getId()));
                     return "land-details";
                 })
                 .orElseGet(() -> {

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LandHub | Customer CRM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main id="main-content" class="admin-shell">
+    <section class="admin-header">
+        <div class="container">
+            <div class="admin-header-row reveal">
+                <div>
+                    <p class="section-kicker">Customer CRM</p>
+                    <h1 th:text="${customer.firstName + ' ' + customer.lastName}">Customer</h1>
+                    <p th:text="${customer.email}">email</p>
+                </div>
+                <a class="btn btn-outline-light" th:href="@{/admin/customers}">Back</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="admin-content section-padding">
+        <div class="container">
+            <div class="alert alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
+            <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+            <article class="admin-card reveal">
+                <div class="admin-card-heading">
+                    <h2>Profile</h2>
+                    <span class="status" th:text="${customer.enabled ? 'ACTIVE' : 'DISABLED'}">ACTIVE</span>
+                </div>
+                <dl class="details-grid">
+                    <div><dt>Name</dt><dd th:text="${customer.firstName + ' ' + customer.lastName}">Customer</dd></div>
+                    <div><dt>Email</dt><dd th:text="${customer.email}">email</dd></div>
+                    <div><dt>Phone</dt><dd th:text="${customer.phone != null && !customer.phone.isBlank() ? customer.phone : 'Not provided'}">phone</dd></div>
+                    <div><dt>Joined</dt><dd th:text="${#temporals.format(customer.createdAt, 'MMM dd, yyyy')}">date</dd></div>
+                </dl>
+                <div class="form-actions" sec:authorize="hasRole('ADMIN')">
+                    <form th:if="${customer.enabled}" th:action="@{/admin/customers/{id}/disable(id=${customer.id})}" method="post">
+                        <button class="btn btn-danger-soft" type="submit">Disable Account</button>
+                    </form>
+                    <form th:if="${!customer.enabled}" th:action="@{/admin/customers/{id}/enable(id=${customer.id})}" method="post">
+                        <button class="btn btn-primary" type="submit">Enable Account</button>
+                    </form>
+                </div>
+            </article>
+
+            <div class="dashboard-grid reveal mt-4">
+                <article class="dashboard-stat"><span>Inquiries</span><strong th:text="${summary.inquiries}">0</strong></article>
+                <article class="dashboard-stat"><span>Site Visits</span><strong th:text="${summary.siteVisits}">0</strong></article>
+                <article class="dashboard-stat"><span>Bookings</span><strong th:text="${summary.bookings}">0</strong></article>
+                <article class="dashboard-stat"><span>Completed</span><strong th:text="${summary.completedBookings}">0</strong></article>
+                <article class="dashboard-stat"><span>Total Paid</span><strong>LKR <span th:text="${summary.totalPaid}">0</span></strong></article>
+                <article class="dashboard-stat"><span>Reviews</span><strong th:text="${summary.reviews}">0</strong></article>
+                <article class="dashboard-stat"><span>Feedback</span><strong th:text="${summary.feedback}">0</strong></article>
+            </div>
+
+            <div class="admin-card reveal mt-4">
+                <div class="admin-card-heading">
+                    <h2>Interaction Timeline</h2>
+                    <span th:text="${#lists.size(timeline)} + ' events'">0 events</span>
+                </div>
+                <div class="empty-state" th:if="${#lists.isEmpty(timeline)}">
+                    <i class="bi bi-clock-history" aria-hidden="true"></i>
+                    <h3>No interactions yet</h3>
+                    <p>This customer's activity will appear here as they use LandHub.</p>
+                </div>
+                <div th:each="item : ${timeline}" class="verification-note">
+                    <strong th:text="${item.type + ' #' + item.relatedId}">Type</strong>
+                    <p th:text="${item.title + ' - ' + item.status}">Title</p>
+                    <small th:text="${#temporals.format(item.dateTime, 'MMM dd, yyyy HH:mm')}">date</small>
+                </div>
+            </div>
+
+            <div class="row g-4 mt-2">
+                <div class="col-lg-6">
+                    <section class="admin-card h-100">
+                        <div class="admin-card-heading"><h2>Inquiry History</h2><span th:text="${#lists.size(inquiries)} + ' records'">0 records</span></div>
+                        <div th:each="inquiry : ${inquiries}" class="verification-note">
+                            <strong th:text="${inquiry.land.title}">Land</strong>
+                            <p><span th:text="${inquiry.status}">OPEN</span> · <span th:text="${inquiry.subject}">Subject</span></p>
+                            <small th:text="${#temporals.format(inquiry.createdAt, 'MMM dd, yyyy HH:mm')}">date</small>
+                        </div>
+                        <p class="text-muted" th:if="${#lists.isEmpty(inquiries)}">No inquiries recorded.</p>
+                    </section>
+                </div>
+
+                <div class="col-lg-6">
+                    <section class="admin-card h-100">
+                        <div class="admin-card-heading"><h2>Site Visit History</h2><span th:text="${#lists.size(siteVisits)} + ' records'">0 records</span></div>
+                        <div th:each="visit : ${siteVisits}" class="verification-note">
+                            <strong th:text="${visit.land.title}">Land</strong>
+                            <p><span th:text="${visit.status}">PENDING</span> · <span th:text="${#temporals.format(visit.preferredDate, 'MMM dd, yyyy')}">date</span></p>
+                            <small th:if="${visit.adminNote}" th:text="${visit.adminNote}">note</small>
+                        </div>
+                        <p class="text-muted" th:if="${#lists.isEmpty(siteVisits)}">No site visits recorded.</p>
+                    </section>
+                </div>
+
+                <div class="col-lg-6">
+                    <section class="admin-card h-100">
+                        <div class="admin-card-heading"><h2>Booking History</h2><span th:text="${#lists.size(bookings)} + ' records'">0 records</span></div>
+                        <div th:each="booking : ${bookings}" class="verification-note">
+                            <strong th:text="${booking.land.title}">Land</strong>
+                            <p><span th:text="${booking.status}">PENDING</span> · LKR <span th:text="${booking.agreedPrice != null ? booking.agreedPrice : booking.land.price}">0</span></p>
+                            <small th:text="${#temporals.format(booking.createdAt, 'MMM dd, yyyy HH:mm')}">date</small>
+                        </div>
+                        <p class="text-muted" th:if="${#lists.isEmpty(bookings)}">No bookings recorded.</p>
+                    </section>
+                </div>
+
+                <div class="col-lg-6">
+                    <section class="admin-card h-100">
+                        <div class="admin-card-heading"><h2>Payment History</h2><span th:text="${#lists.size(payments)} + ' records'">0 records</span></div>
+                        <div th:each="payment : ${payments}" class="verification-note">
+                            <strong th:text="${payment.transactionReference}">LH</strong>
+                            <p>LKR <span th:text="${payment.amount}">0</span> · <span th:text="${payment.status}">PAID</span></p>
+                            <small th:text="${#temporals.format(payment.createdAt, 'MMM dd, yyyy HH:mm')}">date</small>
+                        </div>
+                        <p class="text-muted" th:if="${#lists.isEmpty(payments)}">No payments recorded.</p>
+                    </section>
+                </div>
+
+                <div class="col-lg-6">
+                    <section class="admin-card h-100">
+                        <div class="admin-card-heading"><h2>Reviews</h2><span th:text="${#lists.size(reviews)} + ' records'">0 records</span></div>
+                        <div th:each="review : ${reviews}" class="verification-note">
+                            <strong th:text="${review.title}">Review</strong>
+                            <p><span th:text="${review.status}">PENDING</span> · <span th:text="${review.rating}">5</span>/5 · <span th:text="${review.land.title}">Land</span></p>
+                            <small th:text="${#temporals.format(review.createdAt, 'MMM dd, yyyy HH:mm')}">date</small>
+                        </div>
+                        <p class="text-muted" th:if="${#lists.isEmpty(reviews)}">No reviews recorded.</p>
+                    </section>
+                </div>
+
+                <div class="col-lg-6">
+                    <section class="admin-card h-100">
+                        <div class="admin-card-heading"><h2>Feedback</h2><span th:text="${#lists.size(feedbackItems)} + ' records'">0 records</span></div>
+                        <div th:each="feedback : ${feedbackItems}" class="verification-note">
+                            <strong th:text="${feedback.subject}">Feedback</strong>
+                            <p><span th:text="${feedback.status}">OPEN</span> · <span th:text="${feedback.type}">GENERAL</span></p>
+                            <small th:text="${#temporals.format(feedback.createdAt, 'MMM dd, yyyy HH:mm')}">date</small>
+                        </div>
+                        <p class="text-muted" th:if="${#lists.isEmpty(feedbackItems)}">No feedback recorded.</p>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

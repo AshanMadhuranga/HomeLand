@@ -3,8 +3,11 @@ package com.landhub.auth;
 import com.landhub.land.LandService;
 import com.landhub.land.LandStatus;
 import com.landhub.booking.BookingService;
+import com.landhub.booking.BookingStatus;
+import com.landhub.feedback.FeedbackService;
 import com.landhub.inquiry.InquiryService;
 import com.landhub.payment.PaymentService;
+import com.landhub.review.ReviewService;
 import com.landhub.sitevisit.SiteVisitService;
 import com.landhub.verification.VerificationService;
 import com.landhub.verification.VerificationStatus;
@@ -22,19 +25,28 @@ public class DashboardController {
     private final SiteVisitService siteVisitService;
     private final BookingService bookingService;
     private final PaymentService paymentService;
+    private final ReviewService reviewService;
+    private final FeedbackService feedbackService;
+    private final UserService userService;
 
     public DashboardController(LandService landService,
                                VerificationService verificationService,
                                InquiryService inquiryService,
                                SiteVisitService siteVisitService,
                                BookingService bookingService,
-                               PaymentService paymentService) {
+                               PaymentService paymentService,
+                               ReviewService reviewService,
+                               FeedbackService feedbackService,
+                               UserService userService) {
         this.landService = landService;
         this.verificationService = verificationService;
         this.inquiryService = inquiryService;
         this.siteVisitService = siteVisitService;
         this.bookingService = bookingService;
         this.paymentService = paymentService;
+        this.reviewService = reviewService;
+        this.feedbackService = feedbackService;
+        this.userService = userService;
     }
 
     @GetMapping("/customer/dashboard")
@@ -45,6 +57,11 @@ public class DashboardController {
         model.addAttribute("customerBookingCount", bookingService.findCustomerBookings(email).size());
         model.addAttribute("customerPaymentCount", paymentService.countCustomerPayments(email));
         model.addAttribute("customerTotalPaid", paymentService.customerTotalPaid(email));
+        model.addAttribute("completedPurchaseCount", bookingService.findCustomerBookings(email).stream()
+                .filter(booking -> booking.getStatus() == BookingStatus.COMPLETED)
+                .count());
+        model.addAttribute("customerReviewCount", reviewService.countCustomerReviews(email));
+        model.addAttribute("customerOpenFeedbackCount", feedbackService.countCustomerOpenFeedback(email));
         return "customer/dashboard";
     }
 
@@ -58,6 +75,9 @@ public class DashboardController {
         model.addAttribute("pendingBookingCount", bookingService.countPending());
         model.addAttribute("pendingPaymentCount", paymentService.countPending());
         model.addAttribute("paidRevenue", paymentService.paidRevenue());
+        model.addAttribute("totalCustomerCount", userService.countCustomers());
+        model.addAttribute("pendingReviewCount", reviewService.countPending());
+        model.addAttribute("openFeedbackCount", feedbackService.countOpen());
         return "admin/dashboard";
     }
 
