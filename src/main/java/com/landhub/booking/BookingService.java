@@ -40,6 +40,12 @@ public class BookingService {
         return bookingRepository.findByIdAndCustomerEmailIgnoreCase(id, email);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<Booking> findLatestCustomerLandBooking(String email, Long landId) {
+        return bookingRepository.findTopByCustomerEmailIgnoreCaseAndLandIdAndStatusInOrderByCreatedAtDesc(
+                email, landId, Set.of(BookingStatus.PENDING, BookingStatus.APPROVED, BookingStatus.COMPLETED));
+    }
+
     public Optional<Booking> findCustomerBookingForPayment(Long id, String email) {
         return bookingRepository.findByIdAndCustomerEmailIgnoreCaseForUpdate(id, email);
     }

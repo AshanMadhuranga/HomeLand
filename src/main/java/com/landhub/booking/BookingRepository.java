@@ -28,6 +28,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     boolean existsByCustomerEmailIgnoreCaseAndLandIdAndStatusIn(String email, Long landId, Collection<BookingStatus> statuses);
 
+    Optional<Booking> findTopByCustomerEmailIgnoreCaseAndLandIdAndStatusInOrderByCreatedAtDesc(String email, Long landId, Collection<BookingStatus> statuses);
+
     boolean existsByLandIdAndStatusIn(Long landId, Collection<BookingStatus> statuses);
 
     long countByStatus(BookingStatus status);
