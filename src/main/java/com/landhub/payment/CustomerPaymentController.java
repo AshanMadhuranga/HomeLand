@@ -127,6 +127,7 @@ public class CustomerPaymentController {
                         return "redirect:/customer/payments/" + id;
                     }
                     model.addAttribute("payment", payment);
+                    model.addAttribute("summary", paymentService.getSummary(payment.getBooking()));
                     return "customer/payments/receipt";
                 })
                 .orElseGet(() -> {
